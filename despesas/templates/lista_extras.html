@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Extras</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .btn-novo {
+            display: inline-block;
+            background-color: #17a2b8;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📦 Módulo de Extras</h1>
+        <div style="margin-bottom: 20px;">
+            <a href="{% url 'novo_extra' %}" class="btn-novo">+ Novo Extra</a>
+            <a href="{% url 'home' %}" class="btn-novo" style="background-color: #6c757d;">← Voltar para Despesas</a>
+        </div>
+        <table id="minhaTabela" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Product</th>
+                    <th>Amount</th>
+                    <th>Unitary Value</th>
+                    <th>Total</th>
+                    <th>Origin</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in extras %}
+                <tr>
+                    <td>{{ item.data|date:"d/m/Y" }}</td>
+                    <td>{{ item.product }}</td>
+                    <td>{{ item.amount }}</td>
+                    <td>R$ {{ item.unitary_value }}</td>
+                    <td style="font-weight:bold; color:green;">R$ {{ item.total }}</td>
+                    <td>{{ item.origin }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center;">Nenhum extra cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#minhaTabela').DataTable({ language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' }, order: [[0, 'desc']] });
+        });
+    </script>
+</body>
+
+</html>

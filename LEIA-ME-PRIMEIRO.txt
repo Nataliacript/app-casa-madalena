@@ -1,0 +1,27 @@
+=== INSTRUÇÕES PARA CONTINUAR O PROJETO ===
+
+1. Abra esta pasta no VS Code.
+2. Abra o terminal (Ctrl + `).
+3. Ative o ambiente: source venv/bin/activate
+4. Ligue o servidor: python manage.py runserver 0.0.0.0:8000
+5. Abra no navegador: http://localhost:8000/
+6. Para o servidor: Ctrl + C
+7. Parar caso fechei errado: fuser -k 8000/tcp
+
+
+O QUE JÁ ESTÁ PRONTO:
+- Criação de despesas (Funcionando)
+- Listagem na tabela (Funcionando)
+- Excluir despesas (Funcionando)
+- Download para Excel (Funcionando)
+
+O QUE PRECISO FAZER AGORA:
+- Fazer o botão de EDITAR funcionar.
+- Colocar o sistema na internet (Deploy).
+
+
+CHAT GLM-4.7
+
+https://chat.z.ai/s/396a21ba-8883-4380-b7aa-ca342a4b24b0
+
+

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Resultados Mensais</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			padding: 0;
+			margin: 0;
+			background-color: #f4f4f4;
+			display: flex;
+			min-height: 100vh;
+		}
+
+		/* Menu Lateral */
+		.sidebar {
+			width: 320px;
+			background: #343a40;
+			color: white;
+			padding: 20px;
+			box-sizing: border-box;
+			overflow-y: auto;
+		}
+
+		.sidebar h2 {
+			margin-top: 0;
+			font-size: 18px;
+			border-bottom: 1px solid #555;
+			padding-bottom: 10px;
+		}
+
+		.sidebar ul {
+			list-style: none;
+			padding: 0;
+		}
+
+		.sidebar>ul>li a {
+			display: block;
+			padding: 12px;
+			color: #ddd;
+			text-decoration: none;
+			border-radius: 4px;
+			margin-bottom: 5px;
+			transition: 0.2s;
+			font-weight: bold;
+		}
+
+		.sidebar>ul>li a:hover,
+		.sidebar>ul>li a.arquivo-ativo {
+			background-color: #007bff;
+			color: white;
+		}
+
+		/* Sub-Menu das Abas */
+		.sub-menu-abas {
+			margin-top: 5px;
+			margin-left: 15px;
+			padding-left: 10px;
+			border-left: 2px solid #555;
+		}
+
+		.sub-menu-abas li a {
+			font-size: 13px !important;
+			font-weight: normal !important;
+			padding: 8px 10px !important;
+			background: #495057;
+			border-radius: 15px;
+			margin-bottom: 4px !important;
+			display: block;
+		}
+
+		.sub-menu-abas li a.aba-ativa {
+			background-color: #28a745 !important;
+			color: white !important;
+		}
+
+		.upload-form {
+			margin-top: 20px;
+			background: #495057;
+			padding: 15px;
+			border-radius: 6px;
+		}
+
+		.upload-form input[type="file"] {
+			width: 100%;
+			margin-bottom: 10px;
+			color: white;
+			font-size: 12px;
+		}
+
+		.btn-upload {
+			width: 100%;
+			background-color: #28a745;
+			color: white;
+			padding: 10px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-weight: bold;
+		}
+
+		.btn-voltar {
+			display: block;
+			color: #aaa;
+			text-decoration: none;
+			margin-bottom: 20px;
+			font-size: 14px;
+		}
+
+		/* Area Principal */
+		.main-content {
+			flex: 1;
+			padding: 30px;
+			overflow-x: auto;
+		}
+
+		.main-content h1 {
+			color: #333;
+		}
+
+		/* Tabela */
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 20px;
+			background: white;
+			box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+		}
+
+		th,
+		td {
+			padding: 10px;
+			border: 1px solid #ddd;
+			text-align: left;
+		}
+
+		th {
+			background-color: #007bff;
+			color: white;
+		}
+
+		tr:nth-child(even) {
+			background-color: #f8f9fa;
+		}
+	</style>
+</head>
+
+<body>
+
+	<!-- BARRA LATERAL -->
+	<div class="sidebar">
+		<a href="{% url 'home' %}" class="btn-voltar">← Voltar para Lançamentos</a>
+		<h2>📁 Histórico de Resultados</h2>
+
+		<ul>
+			{% for arq in arquivos_salvos %}
+			<li>
+				<!-- Link do Arquivo Principal -->
+				<a href="?arquivo_id={{ arq.id }}"
+					class="{% if arquivo_selecionado.id == arq.id %}arquivo-ativo{% endif %}">
+					📄 {{ arq.nome }}
+				</a>
+
+				<!-- SE este arquivo for o que está selecionado, mostra as abas dele -->
+				{% if arquivo_selecionado.id == arq.id %}
+				<ul class="sub-menu-abas">
+					{% for aba in abas_disponiveis %}
+					<li>
+						<!-- O link manda o ID do arquivo E o nome da aba -->
+						<a href="?arquivo_id={{ arq.id }}&aba={{ aba }}"
+							class="{% if aba_selecionada == aba %}aba-ativa{% endif %}">
+							📑 {{ aba }}
+						</a>
+					</li>
+					{% endfor %}
+				</ul>
+				{% endif %}
+			</li>
+			{% empty %}
+			<li style="color: #aaa; font-style: italic; font-size: 14px;">Nenhum arquivo enviado ainda.</li>
+			{% endfor %}
+		</ul>
+
+		<!-- FORMULÁRIO DE UPLOAD -->
+		<div class="upload-form">
+			<h3>Adicionar novo:</h3>
+			<form method="POST" enctype="multipart/form-data">
+				{% csrf_token %}
+				<input type="file" name="arquivo_excel" accept=".xlsx, .xls" required>
+
+
+				<input type="text" name="abas_liberadas" placeholder="Abas liberadas (Ex: Resumo, Dados)"
+					style="width: 100%; margin-bottom: 10px; padding: 8px; border: none; border-radius: 4px; font-size: 12px;">
+
+				<button type="submit" class="btn-upload">Enviar</button>
+			</form>
+		</div>
+	</div>
+
+	<!-- CONTEÚDO PRINCIPAL -->
+	<div class="main-content">
+		{% if arquivo_selecionado and aba_selecionada %}
+		<h1>📊 {{ arquivo_selecionado.nome }} <small style="color:#666; font-size: 16px;">- {{ aba_selecionada
+				}}</small></h1>
+		{% elif arquivo_selecionado %}
+		<h1>📊 {{ arquivo_selecionado.nome }}</h1>
+		{% else %}
+		<h1>📊 Selecione um resultado ao lado</h1>
+		{% endif %}
+
+		{% if tabela_html %}
+		{{ tabela_html|safe }}
+		{% elif not arquivo_selecionado %}
+		<p style="color: #666;">Envie um arquivo Excel com várias abas usando o menu lateral.</p>
+		{% endif %}
+	</div>
+
+</body>
+
+</html>

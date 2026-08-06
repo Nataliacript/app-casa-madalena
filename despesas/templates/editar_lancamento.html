@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Despesa</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        div {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-salvar {
+            width: 100%;
+            padding: 12px;
+            background-color: #ffc107;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-voltar {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #666;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>✏️ Editar Lançamento</h1>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            <div>
+                <label>Data:</label>
+                <input type="date" name="data" value="{{ despesa.data|date:'Y-m-d' }}" required>
+            </div>
+
+            <div>
+                <label>Valor (R$):</label>
+                <input type="number" step="0.01" name="valor" value="{{ despesa.valor }}" required>
+            </div>
+
+            <!-- NOVA LÓGICA: Sem if's no select. O JavaScript vai arrumar! -->
+            <div>
+                <label>Origem:</label>
+                <select name="origem" id="id_origem_edit" required>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Transferência">Transferência</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Categoria:</label>
+                <select id="id_categoria" name="categoria" required>
+                    <option value="Alimentação">Alimentação</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Moradia">Moradia</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Educação">Educação</option>
+                    <option value="Lazer">Lazer</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Subcategoria:</label>
+                <select id="id_subcategoria" name="subcategoria" required>
+                </select>
+            </div>
+
+            <div>
+                <label>Número:</label>
+                <input type="text" name="numero" value="{{ despesa.numero }}" required>
+            </div>
+
+            <div>
+                <label>Info Extras:</label>
+                <input type="text" name="info" value="{{ despesa.info }}" required>
+            </div>
+
+            <div>
+                <label>Descrição:</label>
+                <textarea name="descricao" rows="4" required>{{ despesa.descricao }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-salvar">Salvar Alterações</button>
+            <a href="{% url 'home' %}" class="btn-voltar">← Cancelar e Voltar para a lista</a>
+        </form>
+    </div>
+
+    <script>
+        // Dados vindos do Python (escondidos nos valores)
+        const origemSalva = "{{ despesa.origem }}";
+        const categoriaSalva = "{{ despesa.categoria }}";
+        const subcategoriaSalva = "{{ despesa.subcategoria }}";
+
+        const selectOrigem = document.getElementById('id_origem_edit');
+        const selectCategoria = document.getElementById('id_categoria');
+        const selectSubcategoria = document.getElementById('id_subcategoria');
+
+        // 1. Força a seleção da Origem salva
+        selectOrigem.value = origemSalva;
+
+        // 2. Dados das Subcategorias
+        const subcategoriasPorCategoria = {
+
+            "Adjust": [
+                "Adjust"
+            ],
+            "Annualidad-Fixa": [
+                "AquaLabWaterTest",
+                "Gas inspection",
+                "INTERPREV-Fiscalisacao",
+                "INTERPREV-Segurancaesaude",
+                "License",
+                "SOPFOGO-Extinctores",
+                "SOPFOGO-ManutencaoCentralIncendio",
+                "SPA"
+            ],
+            "BBQParty": [
+                "BBQfood",
+                "decoration"
+            ],
+            "Bar": [
+                "AppleCider",
+                "Beer",
+                "Beer 1L",
+                "Cachaça",
+                "Coca",
+                "FruitCider",
+                "fruits-bar",
+                "Furniture",
+                "Greenwine",
+                "Ice tea",
+                "Icecube-Bar",
+                "liqueur",
+                "red bull",
+                "Sangria",
+                "Sprite",
+                "Verso3",
+                "Verso5",
+                "Vinho tinto",
+                "water"
+            ],
+            "Bar-Mojito": [
+                "icecube",
+                "Limao",
+                "Mint",
+                "Rhum",
+                "Snacks",
+                "SodaWater"
+            ],
+            "Bike": [
+                "Fixing",
+                "Rubber"
+            ],
+            "Bpi": [
+                "AliguerTPEREDUNICREMENSAL",
+                "Fees",
+                "Madalena8-BPI",
+                "Paylink",
+                "Paylink"
+            ],
+            "Cafédamanhã": [
+                "Banana",
+                "Butter",
+                "Cacao",
+                "canela",
+                "Coffee",
+                "coffeefilter",
+                "Flakes",
+                "Flour",
+                "fruits",
+                "gas-Cafédamanhã",
+                "Jam",
+                "milk",
+                "Muesli",
+                "oil",
+                "peanutbutter",
+                "pepper",
+                "Salt",
+                "Sugar",
+                "Tea",
+                "Vegan"
+            ],
+            "ChillPills": [
+                "Pills"
+            ],
+            "Cleaning": [
+                "BleachToilet",
+                "Cifi",
+                "DishwashLiquid",
+                "Diverso-Cleaning",
+                "GlassCleaner",
+                "Mistolin",
+                "Mop",
+                "saco10l",
+                "Softner",
+                "Sponges",
+                "trashbag50l",
+                "WashingPowder"
+            ],
+            "Commission": [
+                "Airbnb cancelation",
+                "Airbnb comission",
+                "Booking Other taxs",
+                "Booking Paymentcommision"
+            ],
+            "DespesasPessoas/PrivateA": [
+                "Adrien",
+                "Invest",
+                "Marketing",
+                "RentAdri",
+                "Van"
+            ],
+            "DinnerNight": [
+                "food"
+            ],
+            "Drop": [
+                "Adriendrop",
+                "DepositDrop",
+                "FromMBtoAdrianMoney",
+                "FromDroptoAdrianMoney",
+                "Jar",
+                "FromAdrianMoneytoDrop",
+                "FromMBtoDrop"
+            ],
+            "Hostelfurnitures": [
+                "Bathroom",
+                "Bedroom",
+                "Bedroom\"Blankets\"",
+                "Bedroom\"Sheets\"",
+                "electromenager",
+                "General",
+                "Kitchen",
+                "Plants",
+                "Rooftop",
+                "Staff"
+            ],
+            "Impostos": [
+                "Imi",
+                "Imi10",
+                "Imi8",
+                "INPI",
+                "IRS",
+                "IVA",
+                "Seg.Soc."
+            ],
+            "Insurance": [
+                "Aggema",
+                "Auto",
+                "CFE",
+                "Madalena10",
+                "Madalena8",
+                "Res.Civ.Hostel"
+            ],
+            "LiquorBar": [
+                "Amarguinha",
+                "Aperol",
+                "Beirao",
+                "Ginha",
+                "Maciera",
+                "Medronho",
+                "PateldeNata",
+                "Portwine"
+            ],
+            "Lollipop": [
+                "Lollipop"
+            ],
+            "Mada8": [
+                "Administracao",
+                "Obra"
+            ],
+            "Marketing": [
+                "others-marketing"
+            ],
+            "Obra": [
+                "\"NomeoftheProject\"",
+                "MaodeObra\"NomeoftheProject\"",
+                "Materiel\"NomeoftheProject\"",
+                "Tools\"NomeoftheProject\""
+            ],
+            "Obra-\"2025\"": [
+                "Agua\"2025\"",
+                "Eletricidade\"2025\"",
+                "Furnitures2025\"",
+                "Incêncio\"2025\"",
+                "Mao-de-obra\"2025\"",
+                "Material\"2025\"",
+                "Tools\"2025\""
+            ],
+            "Obra-\"2026\"": [
+                "Building/Construction/Company\"2026\"",
+                "Cafe/food\"2026\"",
+                "Furnitures2026\"",
+                "Incêncio\"2026\"",
+                "Mao-de-obra\"2026\"",
+                "Material\"2026\"",
+                "Material/Tools\"2026\"",
+                "Project/Admin\"2026\"",
+                "Tools\"2026\"",
+                "Uber/ Transporte\"2026\""
+            ],
+            "Obra-\"Beds\"": [
+                "Bunkbeds"
+            ],
+            "Obra-\"FavelaRecycling\"": [
+                "furnitures\"FavelaRecycling\"",
+                "Material\"FavelaRecycling\""
+            ],
+            "Obra-\"NomedoProject\"": [
+                "Furnitures\"NomedoProject\"",
+                "MaodeObra\"NomedoProject\"",
+                "material\"NomedoProject\""
+            ],
+            "Obra-\"Project Cafe\"": [
+                "Furnitures\"Project Cafe\"",
+                "MaodeObra\"Project Cafe\"",
+                "material\"Project Cafe\""
+            ],
+            "Obra-\"RoofTop\"": [
+                "Furniture\"RoofTop\"",
+                "MaodeObra\"RoofTop\"",
+                "Tools\"RoofTop\""
+            ],
+            "Obra-\"Season7\"": [
+                "Furnitures\"Season7\"",
+                "MaodeObra\"Season7\"",
+                "material\"Season7\""
+            ],
+            "Obra-\"Season8\"": [
+                "MaodeObraSeason8",
+                "material/tools\"Season8\"",
+                "furniture\"Season8\""
+            ],
+            "Others": [
+                "Dryer",
+                "Key",
+                "Other"
+            ],
+            "PapelPack": [
+                "DiversosPapelpack",
+                "Gloves",
+                "Handsoap",
+                "Iva-PapelPack",
+                "KitchenRoll",
+                "SunsetFloorCleaner",
+                "Toalha de mao",
+                "Toiletpaper",
+                "Trashbag120l",
+                "TrashbagToilet"
+            ],
+            "Papelaria": [
+                "Caneta",
+                "design",
+                "Diversos-Papelaria",
+                "Ink",
+                "lápis",
+                "Multicopias",
+                "Plastificaçao"
+            ],
+            "Refund": [
+                "Airbnb",
+                "Refund"
+            ],
+            "TheProject50": [
+                "ArchitectProject"
+            ],
+            "Transporte": [
+                "Bus",
+                "UberCopter"
+            ],
+            "Wages": [
+                "2x2x2",
+                "barShift",
+                "Clarita-wages",
+                "Cleaning",
+                "Dinner",
+                "Excel",
+                "Food Staff",
+                "Manager",
+                "Marta-wages",
+                "Nightshift",
+                "pancakes",
+                "ReceptionShift"
+            ],
+            "bedbugsprotocol": [
+                "Desinfection",
+                "Diverso-bedbugsprotocol",
+                "laundry",
+                "Weapons"
+            ],
+            "mensalidade-Fixa": [
+                "ÁguaFAGAR",
+                "CityTax",
+                "Cloudbeds",
+                "Contabilidade",
+                "EnergiaEDP",
+                "Gaz",
+                "NOSInternet",
+                "Spotify"
+            ],
+            "shopping": [
+                "bag"
+            ]
+        };
+
+        // 3. Função para preencher a subcategoria
+        function preencherSubcategorias(categoria, subcatParaSelecionar) {
+            selectSubcategoria.innerHTML = '';
+            if (subcategoriasPorCategoria[categoria]) {
+                subcategoriasPorCategoria[categoria].forEach(function (sub) {
+                    let option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    if (sub === subcatParaSelecionar) option.selected = true;
+                    selectSubcategoria.appendChild(option);
+                });
+            }
+        }
+
+        // 4. Força a seleção da Categoria salva e preenche as subs
+        selectCategoria.value = categoriaSalva;
+        preencherSubcategorias(categoriaSalva, subcategoriaSalva);
+
+        // 5. Se o usuário mudar a categoria, atualiza a subcategoria
+        selectCategoria.addEventListener('change', function () {
+            preencherSubcategorias(this.value, '');
+        });
+    </script>
+
+</body>
+
+</html>

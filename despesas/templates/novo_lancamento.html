@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Lançamento de Despesas</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        select,
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Lançar Nova Despesa</h1>
+
+        <form method="POST" action="{% url 'criar_despesa' %}" style="display: grid; gap: 15px;">
+
+            {% csrf_token %}
+
+            <div>
+                <label><b>Data:</b></label><br>
+                <input type="date" name="data"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+
+            <div>
+                <label><b>Valor (R$):</b></label><br>
+                <input type="number" step="0.01" name="valor" placeholder="Ex: 150.50"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+
+            <div>
+                <label><b>Origem:</b></label><br>
+                <select name="origem" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"
+                    required>
+                    <option value="" disabled selected>Selecione a origem...</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Transferência">Transferência</option>
+                </select>
+            </div>
+
+            <!-- CATEGORIA COM O ID ESPECIAL -->
+            <div>
+                <label><b>Categoria:</b></label><br>
+                <select id="id_categoria" name="categoria"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+                    <option value="" disabled selected>Selecione a categoria...</option>
+                    <option value="Annualidad-Fixa">Annualidad-Fixa</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Moradia">Moradia</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Educação">Educação</option>
+                    <option value="Lazer">Lazer</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+
+            <!-- SUBCATEGORIA COM O ID ESPECIAL -->
+            <div>
+                <label><b>Subcategoria:</b></label><br>
+                <select id="id_subcategoria" name="subcategoria"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+                    <option value="" disabled selected>Selecione a categoria primeiro...</option>
+                </select>
+            </div>
+
+            <div>
+                <label><b>Número:</b></label><br>
+                <input type="text" name="numero" placeholder="Nº da nota ou documento"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+
+            <div>
+                <label><b>Info Extras:</b></label><br>
+                <input type="text" name="info"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+
+            <div>
+                <label><b>Descrição:</b></label><br>
+                <textarea name="descricao" rows="4" placeholder="Detalhes adicionais..."
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"
+                    required></textarea>
+            </div>
+
+            <button type="submit"
+                style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
+                Salvar Lançamento
+            </button>
+
+            <a href="{% url 'home' %}"
+                style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
+                Voltar para a lista</a>
+
+        </form>
+    </div>
+
+
+
+    <button type="submit"
+        style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
+        Salvar Lançamento
+    </button>
+
+    <!-- Botão para voltar -->
+    <a href="{% url 'home' %}"
+        style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
+        Voltar para a lista</a>
+
+    </form>
+    </div>
+    <button type="submit">Salvar Despesa</button>
+    </form>
+    </div>
+
+    <!-- A MÁGICA DO JAVASCRIPT AQUI -->
+    <script>
+        // 1. O "Banco de Dados" secreto que fica no navegador
+        const subcategoriasPorCategoria = {
+            "Adjust": [
+                "Adjust"
+            ],
+            "Annualidad-Fixa": [
+                "AquaLabWaterTest",
+                "Gas inspection",
+                "INTERPREV-Fiscalisacao",
+                "INTERPREV-Segurancaesaude",
+                "License",
+                "SOPFOGO-Extinctores",
+                "SOPFOGO-ManutencaoCentralIncendio",
+                "SPA"
+            ],
+            "BBQParty": [
+                "BBQfood",
+                "decoration"
+            ],
+            "Bar": [
+                "AppleCider",
+                "Beer",
+                "Beer 1L",
+                "Cachaça",
+                "Coca",
+                "FruitCider",
+                "fruits-bar",
+                "Furniture",
+                "Greenwine",
+                "Ice tea",
+                "Icecube-Bar",
+                "liqueur",
+                "red bull",
+                "Sangria",
+                "Sprite",
+                "Verso3",
+                "Verso5",
+                "Vinho tinto",
+                "water"
+            ],
+            "Bar-Mojito": [
+                "icecube",
+                "Limao",
+                "Mint",
+                "Rhum",
+                "Snacks",
+                "SodaWater"
+            ],
+            "Bike": [
+                "Fixing",
+                "Rubber"
+            ],
+            "Bpi": [
+                "AliguerTPEREDUNICREMENSAL",
+                "Fees",
+                "Madalena8-BPI",
+                "Paylink",
+                "Paylink"
+            ],
+            "Cafédamanhã": [
+                "Banana",
+                "Butter",
+                "Cacao",
+                "canela",
+                "Coffee",
+                "coffeefilter",
+                "Flakes",
+                "Flour",
+                "fruits",
+                "gas-Cafédamanhã",
+                "Jam",
+                "milk",
+                "Muesli",
+                "oil",
+                "peanutbutter",
+                "pepper",
+                "Salt",
+                "Sugar",
+                "Tea",
+                "Vegan"
+            ],
+            "ChillPills": [
+                "Pills"
+            ],
+            "Cleaning": [
+                "BleachToilet",
+                "Cifi",
+                "DishwashLiquid",
+                "Diverso-Cleaning",
+                "GlassCleaner",
+                "Mistolin",
+                "Mop",
+                "saco10l",
+                "Softner",
+                "Sponges",
+                "trashbag50l",
+                "WashingPowder"
+            ],
+            "Commission": [
+                "Airbnb cancelation",
+                "Airbnb comission",
+                "Booking Other taxs",
+                "Booking Paymentcommision"
+            ],
+            "DespesasPessoas/PrivateA": [
+                "Adrien",
+                "Invest",
+                "Marketing",
+                "RentAdri",
+                "Van"
+            ],
+            "DinnerNight": [
+                "food"
+            ],
+            "Drop": [
+                "Adriendrop",
+                "DepositDrop",
+                "FromMBtoAdrianMoney",
+                "FromDroptoAdrianMoney",
+                "Jar",
+                "FromAdrianMoneytoDrop",
+                "FromMBtoDrop"
+            ],
+            "Hostelfurnitures": [
+                "Bathroom",
+                "Bedroom",
+                "Bedroom\"Blankets\"",
+                "Bedroom\"Sheets\"",
+                "electromenager",
+                "General",
+                "Kitchen",
+                "Plants",
+                "Rooftop",
+                "Staff"
+            ],
+            "Impostos": [
+                "Imi",
+                "Imi10",
+                "Imi8",
+                "INPI",
+                "IRS",
+                "IVA",
+                "Seg.Soc."
+            ],
+            "Insurance": [
+                "Aggema",
+                "Auto",
+                "CFE",
+                "Madalena10",
+                "Madalena8",
+                "Res.Civ.Hostel"
+            ],
+            "LiquorBar": [
+                "Amarguinha",
+                "Aperol",
+                "Beirao",
+                "Ginha",
+                "Maciera",
+                "Medronho",
+                "PateldeNata",
+                "Portwine"
+            ],
+            "Lollipop": [
+                "Lollipop"
+            ],
+            "Mada8": [
+                "Administracao",
+                "Obra"
+            ],
+            "Marketing": [
+                "others-marketing"
+            ],
+            "Obra": [
+                "\"NomeoftheProject\"",
+                "MaodeObra\"NomeoftheProject\"",
+                "Materiel\"NomeoftheProject\"",
+                "Tools\"NomeoftheProject\""
+            ],
+            "Obra-\"2025\"": [
+                "Agua\"2025\"",
+                "Eletricidade\"2025\"",
+                "Furnitures2025\"",
+                "Incêncio\"2025\"",
+                "Mao-de-obra\"2025\"",
+                "Material\"2025\"",
+                "Tools\"2025\""
+            ],
+            "Obra-\"2026\"": [
+                "Building/Construction/Company\"2026\"",
+                "Cafe/food\"2026\"",
+                "Furnitures2026\"",
+                "Incêncio\"2026\"",
+                "Mao-de-obra\"2026\"",
+                "Material\"2026\"",
+                "Material/Tools\"2026\"",
+                "Project/Admin\"2026\"",
+                "Tools\"2026\"",
+                "Uber/ Transporte\"2026\""
+            ],
+            "Obra-\"Beds\"": [
+                "Bunkbeds"
+            ],
+            "Obra-\"FavelaRecycling\"": [
+                "furnitures\"FavelaRecycling\"",
+                "Material\"FavelaRecycling\""
+            ],
+            "Obra-\"NomedoProject\"": [
+                "Furnitures\"NomedoProject\"",
+                "MaodeObra\"NomedoProject\"",
+                "material\"NomedoProject\""
+            ],
+            "Obra-\"Project Cafe\"": [
+                "Furnitures\"Project Cafe\"",
+                "MaodeObra\"Project Cafe\"",
+                "material\"Project Cafe\""
+            ],
+            "Obra-\"RoofTop\"": [
+                "Furniture\"RoofTop\"",
+                "MaodeObra\"RoofTop\"",
+                "Tools\"RoofTop\""
+            ],
+            "Obra-\"Season7\"": [
+                "Furnitures\"Season7\"",
+                "MaodeObra\"Season7\"",
+                "material\"Season7\""
+            ],
+            "Obra-\"Season8\"": [
+                "MaodeObraSeason8",
+                "material/tools\"Season8\"",
+                "furniture\"Season8\""
+            ],
+            "Others": [
+                "Dryer",
+                "Key",
+                "Other"
+            ],
+            "PapelPack": [
+                "DiversosPapelpack",
+                "Gloves",
+                "Handsoap",
+                "Iva-PapelPack",
+                "KitchenRoll",
+                "SunsetFloorCleaner",
+                "Toalha de mao",
+                "Toiletpaper",
+                "Trashbag120l",
+                "TrashbagToilet"
+            ],
+            "Papelaria": [
+                "Caneta",
+                "design",
+                "Diversos-Papelaria",
+                "Ink",
+                "lápis",
+                "Multicopias",
+                "Plastificaçao"
+            ],
+            "Refund": [
+                "Airbnb",
+                "Refund"
+            ],
+            "TheProject50": [
+                "ArchitectProject"
+            ],
+            "Transporte": [
+                "Bus",
+                "UberCopter"
+            ],
+            "Wages": [
+                "2x2x2",
+                "barShift",
+                "Clarita-wages",
+                "Cleaning",
+                "Dinner",
+                "Excel",
+                "Food Staff",
+                "Manager",
+                "Marta-wages",
+                "Nightshift",
+                "pancakes",
+                "ReceptionShift"
+            ],
+            "bedbugsprotocol": [
+                "Desinfection",
+                "Diverso-bedbugsprotocol",
+                "laundry",
+                "Weapons"
+            ],
+            "mensalidade-Fixa": [
+                "ÁguaFAGAR",
+                "CityTax",
+                "Cloudbeds",
+                "Contabilidade",
+                "EnergiaEDP",
+                "Gaz",
+                "NOSInternet",
+                "Spotify"
+            ],
+            "shopping": [
+                "bag"
+            ]
+        };
+
+        // 2. Pegar as caixinhas pelo ID
+        const categoriaSelect = document.getElementById('id_categoria');
+        const subcategoriaSelect = document.getElementById('id_subcategoria');
+
+        // 3. Ouvir o evento de "mudança" na categoria
+        categoriaSelect.addEventListener('change', function () {
+            const categoriaEscolhida = this.value; // Pega o que o usuário escolheu
+
+            // Limpa as opções antigas da subcategoria
+            subcategoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a subcategoria...</option>';
+
+            // 4. Se a categoria escolhida existir na nossa lista, preenche as subcategorias
+            if (subcategoriasPorCategoria[categoriaEscolhida]) {
+                subcategoriasPorCategoria[categoriaEscolhida].forEach(function (subcategoria) {
+                    const option = document.createElement('option');
+                    option.value = subcategoria;
+                    option.textContent = subcategoria;
+                    subcategoriaSelect.appendChild(option);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

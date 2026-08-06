@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Despesas</title>
+
+    <!-- NOVO: CSS do DataTables (deixa a tabela bonita) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Estilo dos seus botões */
+        .btn {
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+        }
+
+        .btn-novo {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .btn-excel {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>📋 Meus Lançamentos</h1>
+
+
+        <div style="margin-bottom: 20px;">
+            <a href="{% url 'criar_despesa' %}" class="btn-novo">+ Novo Lançamento</a>
+            <a href="{% url 'exportar_excel' %}" class="btn-excel">📥 Baixar Planilha Excel</a>
+            <a href="{% url 'resultado_page' %}" class="btn-novo" style="background-color: #fd7e14;">📊 Resultados</a>
+            <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">📦 Módulo de
+                Extras</a>
+
+        </div>
+
+        <!-- A tabela precisa manter o id="minhaTabela" -->
+        <table id="minhaTabela" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Origem</th>
+                    <th>Categoria</th>
+                    <th>Subcategoria</th>
+                    <th>Número</th>
+                    <th>Valor</th>
+                    <th>Info</th>
+                    <th>Descricao</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in despesas %}
+                <tr>
+                    <td>{{ item.data|date:"d/m/Y" }}</td>
+                    <td>{{ item.origem }}</td>
+                    <td>{{ item.categoria }}</td>
+                    <td>{{ item.subcategoria }}</td>
+                    <td>{{ item.numero }}</td>
+                    <td>R$ {{ item.valor }}</td>
+                    <td>{{ item.info }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td>
+                        <a href="{% url 'editar_despesa' item.id %}" class="btn btn-edit">Editar</a>
+                        <a href="{% url 'excluir_despesa' item.id %}" class="btn btn-delete"
+                            onclick="return confirm('Tem certeza que deseja excluir este item?')">Excluir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 20px;">Nenhuma despesa encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- NOVO: Bibliotecas JavaScript necessárias (jQuery e DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
+    <!-- NOVO: Script que liga a mágica (em português e ordenando por data) -->
+    <script>
+        $(document).ready(function () {
+            $('#minhaTabela').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' // Traduz para português
+                },
+                order: [[0, 'desc']], // Ordena pela primeira coluna (Data) de forma decrescente (mais recente primeiro)
+                pageLength: 25, // Mostra 25 linhas por página
+                columnDefs: [
+                    { orderable: false, targets: -1 } // Desativa a ordenação na última coluna (Ações), pra não bagunçar os botões
+                ]
+            });
+        });
+    </script>
+
+</body>
+
+</html>
