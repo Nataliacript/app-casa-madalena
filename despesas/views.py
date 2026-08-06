@@ -3,11 +3,17 @@ from django.http import HttpResponse
 import pandas as pd
 import json
 from .models import Despesa, ArquivoResultado, Extra, ConfigProduto, ConfigOrigem
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
+
+
+@login_required(login_url='/login/')
 def listar_despesas(request):
     despesas = Despesa.objects.all() 
     return render(request, 'lista_despesas.html', {'despesas': despesas})
 
+@login_required(login_url='/login/')
 def criar_despesa(request):
     if request.method == 'POST':
         data = request.POST.get('data')
@@ -27,11 +33,13 @@ def criar_despesa(request):
     
     return render(request, 'novo_lancamento.html')
 
+@login_required(login_url='/login/')
 def excluir_despesa(request, id):
     despesa = Despesa.objects.get(id=id)
     despesa.delete()
     return redirect('home')
 
+@login_required(login_url='/login/')
 def editar_despesa(request, id):
     # 1. Vai no banco de dados e busca a despesa exata com aquele ID
     despesa = Despesa.objects.get(id=id)
@@ -56,13 +64,29 @@ def editar_despesa(request, id):
     # 3. Se for apenas entrar na página (GET), manda o HTML com os dados dessa despesa
     return render(request, 'editar_lancamento.html', {'despesa': despesa})
 
+
 def tela_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            # Se errar a senha, recarrega a página com erro
+            return render(request, 'login.html', {'erro': 'Usuário ou senha incorretos!'})
     return render(request, 'login.html')
 
+def deslogar(request):
+    logout(request)
+    return redirect('tela_login') 
+
+@login_required(login_url='/login/')
 def tela_exportar(request):
     return render(request, 'exportar_excel.html')
 
-# --- NOVA FUNÇÃO DE EXPORTAR EXCEL ---
+@login_required(login_url='/login/')
 def exportar_excel(request):
     # 1. Puxa todos os dados do banco
     dados = Despesa.objects.all().values('data', 'origem', 'categoria', 'subcategoria', 'numero', 'valor', 'info', 'descricao')
@@ -80,7 +104,7 @@ def exportar_excel(request):
     # 5. Entrega o arquivo
     return response
 
-
+@login_required(login_url='/login/')
 def resultado_page(request):
     arquivos_salvos = ArquivoResultado.objects.all().order_by('-data_upload')
     tabela_html = ""
@@ -144,11 +168,12 @@ def resultado_page(request):
         'aba_selecionada': aba_selecionada
     })
 
-
+@login_required(login_url='/login/')
 def listar_extras(request):
     extras = Extra.objects.all().order_by('-data')
     return render(request, 'lista_extras.html', {'extras': extras})
 
+@login_required(login_url='/login/')
 def novo_extra(request):
     produtos_json = "[]"
     origens_json = "[]"
@@ -195,6 +220,7 @@ def novo_extra(request):
   
     return render(request, 'novo_extra.html', {'produtos_json': produtos_json, 'origens_json': origens_json})
 
+@login_required(login_url='/login/')
 def upload_config_extras(request):
     if request.method == 'POST':
         if 'arquivo_produtos' in request.FILES:

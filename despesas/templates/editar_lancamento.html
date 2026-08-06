@@ -73,6 +73,10 @@
 
     <div class="container">
         <h1>✏️ Editar Lançamento</h1>
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="{% url 'logout' %}"
+                style="color: red; text-decoration: none; font-weight: bold; font-size: 14px;">🔒 Sair do Sistema</a>
+        </div>
 
         <form method="POST" action="">
             {% csrf_token %}

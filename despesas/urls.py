@@ -20,6 +20,7 @@ urlpatterns = [
     path('editar/<int:id>/', views.editar_despesa, name='editar_despesa'), 
     path('excluir/<int:id>/', views.excluir_despesa, name='excluir_despesa'),
     path('login/', views.tela_login, name='tela_login'),
+	path('logout/', views.deslogar, name='logout'), 
     path('exportar/', views.exportar_excel, name='exportar_excel'),
     path('resultado/', views.resultado_page, name='resultado_page'), 
     path('extras/', views.listar_extras, name='listar_extras'),
