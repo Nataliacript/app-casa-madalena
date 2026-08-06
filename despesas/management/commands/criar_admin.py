@@ -6,8 +6,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         User = get_user_model()
-        username = 'admin'
-        password = '123456' # Coloque a senha que você quiser aqui
+        username = 'natalia'
+        password = 'App2024*' 
 
         if not User.objects.filter(username=username).exists():
             User.objects.create_superuser(username=username, password=password)
