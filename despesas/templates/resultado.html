@@ -177,6 +177,16 @@
 					{% endfor %}
 				</ul>
 				{% endif %}
+				<!-- NOVO BOTÃO DE EXCLUIR AQUI -->
+				<a href="{% url 'excluir_resultado' arq.id %}"
+					style="color: #ff6b6b; font-size: 11px; text-decoration: none; display: block; margin-top: 5px; margin-left: 15px;"
+					onclick="return confirm('Tem certeza que deseja EXCLUIR este arquivo do servidor?')">
+					🗑️ Excluir Arquivo
+				</a>
+
+
+
+
 			</li>
 			{% empty %}
 			<li style="color: #aaa; font-style: italic; font-size: 14px;">Nenhum arquivo enviado ainda.</li>

@@ -23,6 +23,7 @@ urlpatterns = [
 	path('logout/', views.deslogar, name='logout'), 
     path('exportar/', views.exportar_excel, name='exportar_excel'),
     path('resultado/', views.resultado_page, name='resultado_page'), 
+	path('resultado/excluir/<int:id>/', views.excluir_resultado, name='excluir_resultado'), # NOVA ROTA
     path('extras/', views.listar_extras, name='listar_extras'),
     path('extras/novo/', views.novo_extra, name='novo_extra'),
     path('extras/upload_config/', views.upload_config_extras, name='upload_config_extras'),

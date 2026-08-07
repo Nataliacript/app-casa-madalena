@@ -29,6 +29,35 @@
             color: #333;
         }
 
+        /* NOVO: Forçando a tabela a ficar menor e mais elegante */
+        table.dataTable {
+            font-size: 13px;
+        }
+
+        /* Diminui a letra de toda a tabela */
+
+        th,
+        td {
+            padding: 6px 8px !important;
+            /* Diminui o espaço dentro das células (deixando mais compacto) */
+            white-space: nowrap !important;
+            /* TRAVA os números para não quebrarem de linha */
+        }
+
+        /* NOVO: Mágica exclusiva para a coluna DESCRIÇÃO (que é a 8ª coluna) */
+        th:nth-child(8),
+        td:nth-child(8) {
+            white-space: normal !important;
+            /* Permite que o texto da descrição quebre de linha */
+            min-width: 300px;
+            /* Força a coluna a ser bem grandona (pode aumentar para 400px se quiser) */
+            max-width: 400px;
+        }
+
+
+
+
+
         /* Estilo dos seus botões */
         .btn {
             text-decoration: none;
@@ -116,8 +145,26 @@
                     <th></th>
                 </tr>
             </thead>
+
+
+            <!-- Rodapé da Tabela com o Total -->
+            <tfoot>
+                <tr>
+                    <th colspan="5" style="text-align: right; font-size: 16px; padding: 15px;">TOTAL:</th>
+
+                    <!-- A MÁGICA ESTÁ NO 'white-space: nowrap' AQUI -->
+                    <th
+                        style="color: green; font-size: 18px; font-weight: bold; white-space: nowrap; min-width: 130px;">
+                        $ {{ total_geral|floatformat:2 }}
+                    </th>
+
+                    <th colspan="3"></th>
+                </tr>
+            </tfoot>
+
             <tbody>
                 {% for item in despesas %}
+
                 <tr>
                     <td>{{ item.data|date:"d/m/Y" }}</td>
                     <td>{{ item.origem }}</td>
@@ -154,7 +201,7 @@
                     url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' // Traduz para português
                 },
                 order: [[0, 'desc']], // Ordena pela primeira coluna (Data) de forma decrescente (mais recente primeiro)
-                pageLength: 25, // Mostra 25 linhas por página
+                pageLength: 100, // Mostra 100 linhas por página
                 columnDefs: [
                     { orderable: false, targets: -1 } // Desativa a ordenação na última coluna (Ações), pra não bagunçar os botões
                 ]
