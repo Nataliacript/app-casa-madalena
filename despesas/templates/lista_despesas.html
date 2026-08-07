@@ -78,7 +78,7 @@
 <body>
 
     <div class="container">
-        <h1>📋 Meus Lançamentos</h1>
+        <h1>Casa da Madalena System</h1>
 
 
         <!-- Botões de Ação -->
@@ -86,19 +86,18 @@
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
 
             <div>
-                <a href="{% url 'criar_despesa' %}" class="btn-novo">+ Novo Lançamento</a>
-                <a href="{% url 'exportar_excel' %}" class="btn-excel">📥 Baixar Planilha Excel</a>
-                <a href="{% url 'resultado_page' %}" class="btn-novo" style="background-color: #fd7e14;">📊 Resultado
+                <a href="{% url 'criar_despesa' %}" class="btn-novo">+ New Expense</a>
+                <a href="{% url 'exportar_excel' %}" class="btn-excel">📥 Download Excel file</a>
+                <a href="{% url 'resultado_page' %}" class="btn-novo" style="background-color: #fd7e14;">📊 Results
                     07/2026</a>
-                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">📦 Módulo de
-                    Extras</a>
+                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">+ New Extras</a>
             </div>
 
             <!-- Botão de Sair no canto direito -->
             <div>
                 <a href="{% url 'logout' %}"
                     style="color: #dc3545; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #dc3545; padding: 8px 15px; border-radius: 6px;">🔒
-                    Sair</a>
+                    Exist System</a>
             </div>
 
         </div>
@@ -106,15 +105,15 @@
         <table id="minhaTabela" class="display" style="width:100%">
             <thead>
                 <tr>
-                    <th>Data</th>
-                    <th>Origem</th>
-                    <th>Categoria</th>
-                    <th>Subcategoria</th>
-                    <th>Número</th>
-                    <th>Valor</th>
-                    <th>Info</th>
-                    <th>Descricao</th>
-                    <th>Ações</th>
+                    <th>Date</th>
+                    <th>Money From</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Number</th>
+                    <th>Value</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -125,13 +124,13 @@
                     <td>{{ item.categoria }}</td>
                     <td>{{ item.subcategoria }}</td>
                     <td>{{ item.numero }}</td>
-                    <td>R$ {{ item.valor }}</td>
+                    <td>$ {{ item.valor }}</td>
                     <td>{{ item.info }}</td>
                     <td>{{ item.descricao }}</td>
                     <td>
-                        <a href="{% url 'editar_despesa' item.id %}" class="btn btn-edit">Editar</a>
+                        <a href="{% url 'editar_despesa' item.id %}" class="btn btn-edit">Edit</a>
                         <a href="{% url 'excluir_despesa' item.id %}" class="btn btn-delete"
-                            onclick="return confirm('Tem certeza que deseja excluir este item?')">Excluir</a>
+                            onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
                     </td>
                 </tr>
                 {% empty %}

@@ -65,11 +65,11 @@
 <body>
 
     <div class="container">
-        <h1>Lançar Nova Despesa</h1>
+        <h1>New Expense</h1>
 
         <div style="text-align: right; margin-bottom: 20px;">
             <a href="{% url 'logout' %}"
-                style="color: red; text-decoration: none; font-weight: bold; font-size: 14px;">🔒 Sair do Sistema</a>
+                style="color: red; text-decoration: none; font-weight: bold; font-size: 14px;">🔒 Exit System</a>
         </div>
 
         <form method="POST" action="{% url 'criar_despesa' %}" style="display: grid; gap: 15px;">
@@ -77,19 +77,19 @@
             {% csrf_token %}
 
             <div>
-                <label><b>Data:</b></label><br>
+                <label><b>Date:</b></label><br>
                 <input type="date" name="data"
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
             </div>
 
             <div>
-                <label><b>Valor (R$):</b></label><br>
+                <label><b>Value ($):</b></label><br>
                 <input type="number" step="0.01" name="valor" placeholder="Ex: 150.50"
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
             </div>
 
             <div>
-                <label><b>Origem:</b></label><br>
+                <label><b>Money From:</b></label><br>
                 <select name="origem" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"
                     required>
                     <option value="" disabled selected>Selecione a origem...</option>
@@ -98,45 +98,46 @@
                     <option value="Revolut">Revolut</option>
                     <option value="Drop">Drop</option>
                     <option value="Adrien Money">Adrien Money</option>
+
                 </select>
             </div>
 
             <!-- CATEGORIA COM O ID ESPECIAL -->
             <div>
-                <label><b>Categoria:</b></label><br>
+                <label><b>Category:</b></label><br>
                 <select id="id_categoria" name="categoria"
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
                     <option value="" disabled selected>Selecione a categoria...</option>
                     <option value="Annualidad-Fixa">Annualidad-Fixa</option>
-                    <option value="Bar">Transporte</option>
-                    <option value="Bed Bugs">Moradia</option>
-                    <option value="Bpi">Saúde</option>
-                    <option value="Café da manhã">Educação</option>
-                    <option value="Chill Pills">Lazer</option>
-                    <option value="Cleaning">Outros</option>
-                    <option value="Despesas Pessoais">Outros</option>
-                    <option value="Drop">Outros</option>
-                    <option value="Hostel furnitures">Outros</option>
-                    <option value="Impostos">Outros</option>
-                    <option value="Insurance">Outros</option>
-                    <option value="Liquor Bar">Outros</option>
-                    <option value="Lollipop">Outros</option>
-                    <option value="Marketing">Outros</option>
-                    <option value="Mensalidade-Fixa">Outros</option>
-                    <option value="Obra-Cafe">Outros</option>
-                    <option value="Others">Outros</option>
-                    <option value="Papelaria">Outros</option>
-                    <option value="Papel Pack">Outros</option>
-                    <option value="Refund">Outros</option>
-                    <option value="The Project 50">Outros</option>
-                    <option value="Transporte">Outros</option>
+                    <option value="Bar">Bar</option>
+                    <option value="Bed Bugs">Bed Bugs</option>
+                    <option value="Bpi">Bpi</option>
+                    <option value="Café da manhã">Café da manhã</option>
+                    <option value="Chill Pills">Chill Pills</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Despesas Pessoais">Despesas Pessoais</option>
+                    <option value="Drop">Drop</option>
+                    <option value="Hostel furnitures">Hostel furnitires</option>
+                    <option value="Impostos">Impostos</option>
+                    <option value="Insurance">Insurance</option>
+                    <option value="Liquor Bar">Liquor Bar</option>
+                    <option value="Lollipop">Lollipop</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Mensalidade-Fixa">Mensalidade-fixa</option>
+                    <option value="Obra-Cafe">Obra-Cafe</option>
+                    <option value="Others">Others</option>
+                    <option value="Papelaria">Papelaria</option>
+                    <option value="Papel Pack">Papel Pack</option>
+                    <option value="Refund">Refund</option>
+                    <option value="The Project 50">The Project 50</option>
+                    <option value="Transporte">Transporte</option>
                     <option value="Wages">Outros</option>
                 </select>
             </div>
 
             <!-- SUBCATEGORIA COM O ID ESPECIAL -->
             <div>
-                <label><b>Subcategoria:</b></label><br>
+                <label><b>Subcategory:</b></label><br>
                 <select id="id_subcategoria" name="subcategoria"
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
                     <option value="" disabled selected>Selecione a categoria primeiro...</option>
@@ -144,376 +145,382 @@
             </div>
 
             <div>
-                <label><b>Número:</b></label><br>
+                <label><b>Invoice Number:</b></label><br>
                 <input type="text" name="numero" placeholder="Nº da nota ou documento"
+                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+
+
+
+
+
+            <div>
+                <label><b>Reference Month/Year:</b></label><br>
+                <input type="text" name="info" placeholder="MM/AAAA (Ex: 02/2026)" pattern="^(0[1-9]|1[0-2])\/\d{4}$"
+                    title="Por favor, use o formato MM/AAAA. Exemplo: 02/2026"
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
             </div>
 
             <div>
-                <label><b>Info Extras:</b></label><br>
-                <input type="text" name="info"
-                    style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-
-            <div>
-                <label><b>Descrição:</b></label><br>
+                <label><b>Description/ Supplier/ Employee:</b></label><br>
                 <textarea name="descricao" rows="4" placeholder="Detalhes adicionais..."
                     style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"
                     required></textarea>
             </div>
 
-            <button type="submit"
-                style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
-                Salvar Lançamento
-            </button>
+
 
             <a href="{% url 'home' %}"
                 style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
-                Voltar para a lista</a>
+                Back to the list</a>
+            <!-- Container para colocar os botões um do lado do outro -->
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+
+                <!-- BOTÃO 1: Salva e volta para a lista (Original) -->
+                <button type="submit" name="acao" value="salvar_voltar"
+                    style="flex: 1; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
+                    Salve and Back to the list
+                </button>
+
+                <!-- BOTÃO 2: Salva e recarrega a mesma página (Novo!) -->
+                <button type="submit" name="acao" value="salvar_novo"
+                    style="flex: 1; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
+                    Salve and New expense
+                </button>
+
+
+            </div>
+
 
         </form>
-    </div>
 
 
 
-    <button type="submit"
-        style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold;">
-        Salvar Lançamento
-    </button>
 
-    <!-- Botão para voltar -->
-    <a href="{% url 'home' %}"
-        style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
-        Voltar para a lista</a>
 
-    </form>
-    </div>
-    <button type="submit">Salvar Despesa</button>
-    </form>
-    </div>
+        <!-- A MÁGICA DO JAVASCRIPT AQUI -->
+        <script>
+            // 1. O "Banco de Dados" secreto que fica no navegador
+            const subcategoriasPorCategoria = {
+                "Adjust": [
+                    "Adjust"
+                ],
+                "Annualidad-Fixa": [
+                    "Aqua Lab Water Test",
+                    "Gas inspection",
+                    "INTERPREV-Fiscalisacao",
+                    "INTERPREV-Segurancaesaude",
+                    "License",
+                    "SOPFOGO-Extinctores",
+                    "SOPFOGO-Manutencao Central Incendio",
+                    "SPA"
+                ],
+                "BBQParty": [
+                    "BBQfood",
+                    "decoration"
+                ],
+                "Bar": [
+                    "Apple Cider",
+                    "Beer",
+                    "Beer 1L",
+                    "Cachaça",
+                    "Coca",
+                    "Fruit Cider",
+                    "Fruits bar",
+                    "Furniture",
+                    "Green Wine",
+                    "Ice tea",
+                    "Ice cube – Bar",
+                    "Liqueur",
+                    "Red Bull",
+                    "Sangria",
+                    "Sprite",
+                    "Vinho tinto",
+                    "Water"
+                ],
+                "Bar-Mojito": [
+                    "icecube",
+                    "Limao",
+                    "Mint",
+                    "Rhum",
+                    "Snacks",
+                    "SodaWater"
+                ],
+                "Bed Bugs": [
+                    "Desinfection",
+                    "Diverso – bed bug",
+                    "laundry",
+                    "Weapons"
+                ],
+                "Bike": [
+                    "Fixing",
+                    "Rubber"
+                ],
+                "Bpi": [
+                    "Aliguer TPEREDUNICRE MENSAL",
+                    "Fees",
+                    "Madalena8-BPI",
+                    "Paylink"
+                ],
+                "Café da manhã": [
+                    "Banana",
+                    "Butter",
+                    "Cacao",
+                    "Canela",
+                    "Coffee",
+                    "Coffee filter",
+                    "Flakes",
+                    "Flour",
+                    "Fruits",
+                    "Gas-Café da manhã",
+                    "Jam",
+                    "Milk",
+                    "Muesli",
+                    "Oil",
+                    "Peanut butter",
+                    "pepper",
+                    "Salt",
+                    "Sugar",
+                    "Tea",
+                    "Vegan"
+                ],
+                "Chill Pills": [
+                    "Pills"
+                ],
+                "Cleaning": [
+                    "Bleach Toilet",
+                    "Cifi",
+                    "Dishwash Liquid",
+                    "Diverso-Cleaning",
+                    "Glass Cleaner",
+                    "Mistolin",
+                    "Mop",
+                    "saco10l",
+                    "Softner",
+                    "Sponges",
+                    "Ttrash bag 50l",
+                    "Washing Powder"
+                ],
+                "Commission": [
+                    "Airbnb cancelation",
+                    "Airbnb comission",
+                    "Booking Other taxs",
+                    "Booking Payment commision"
+                ],
+                "Despesas Pessoais": [
+                    "Adrien",
+                    "Invest",
+                    "Marketing",
+                    "Rent Adri",
+                    "Van"
+                ],
+                "DinnerNight": [
+                    "Food"
+                ],
+                "Drop": [
+                    "Adrien drop",
+                    "Deposit Drop",
+                    "From MB to Adrien Money",
+                    "From Drop to Adrien Money",
+                    "Jar",
+                    "From Adrian Money to Drop",
+                    "From Bpi to Revolut",
+                    "From Paypal to Revolut",
+                    "From MB to Drop"
+                ],
+                "Hostel furnitures": [
+                    "Bathroom",
+                    "Bedroom",
+                    "Bedroom\"Blankets\"",
+                    "Bedroom\"Sheets\"",
+                    "Electromenager",
+                    "General",
+                    "Kitchen",
+                    "Plants",
+                    "Rooftop",
+                    "Staff"
+                ],
+                "Impostos": [
+                    "Imi",
+                    "Imi10",
+                    "Imi8",
+                    "INPI",
+                    "IRS",
+                    "IVA",
+                    "Seg.Soc."
+                ],
+                "Insurance": [
+                    "Aggema",
+                    "Auto",
+                    "CFE",
+                    "Madalena10",
+                    "Madalena8",
+                    "Res.Civ.Hostel"
+                ],
+                "Liquor Bar": [
+                    "Amarguinha",
+                    "Aperol",
+                    "Beirao",
+                    "Ginha",
+                    "Maciera",
+                    "Medronho",
+                    "Pastel de Nata",
+                    "Port Wine"
+                ],
+                "Lollipop": [
+                    "Lollipop"
+                ],
+                "Mada8": [
+                    "Administracao",
+                    "Obra"
+                ],
+                "Marketing": [
+                    "Others-marketing"
+                ],
+                "Mensalidade-Fixa": [
+                    "ÁguaFAGAR",
+                    "CityTax",
+                    "Cloudbeds",
+                    "Contabilidade",
+                    "EnergiaEDP",
+                    "Gaz",
+                    "NOSInternet",
+                    "Spotify"
+                ],
+                "Obra": [
+                    "\"NomeoftheProject\"",
+                    "MaodeObra\"NomeoftheProject\"",
+                    "Materiel\"NomeoftheProject\"",
+                    "Tools\"NomeoftheProject\""
+                ],
+                "Obra-\"2025\"": [
+                    "Agua\"2025\"",
+                    "Eletricidade\"2025\"",
+                    "Furnitures2025\"",
+                    "Incêncio\"2025\"",
+                    "Mao-de-obra\"2025\"",
+                    "Material\"2025\"",
+                    "Tools\"2025\""
+                ],
+                "Obra-\"2026\"": [
+                    "Building/Construction/Company\"2026\"",
+                    "Cafe/food\"2026\"",
+                    "Furnitures2026\"",
+                    "Incêncio\"2026\"",
+                    "Mao-de-obra\"2026\"",
+                    "Material\"2026\"",
+                    "Material/Tools\"2026\"",
+                    "Project/Admin\"2026\"",
+                    "Tools\"2026\"",
+                    "Uber/ Transporte\"2026\""
+                ],
+                "Obra-\"Beds\"": [
+                    "Bunkbeds"
+                ],
+                "Obra-\"FavelaRecycling\"": [
+                    "furnitures\"FavelaRecycling\"",
+                    "Material\"FavelaRecycling\""
+                ],
+                "Obra-\"NomedoProject\"": [
+                    "Furnitures\"NomedoProject\"",
+                    "MaodeObra\"NomedoProject\"",
+                    "material\"NomedoProject\""
+                ],
+                "Obra-\"Project Cafe\"": [
+                    "Furnitures\"Project Cafe\"",
+                    "MaodeObra\"Project Cafe\"",
+                    "material\"Project Cafe\""
+                ],
+                "Obra-\"RoofTop\"": [
+                    "Furniture\"RoofTop\"",
+                    "MaodeObra\"RoofTop\"",
+                    "Tools\"RoofTop\""
+                ],
+                "Obra-Cafe": [
+                    "Furnitures-Cafe",
+                    "MaodeObra-Cafe",
+                    "Material/Tools-Cafe",
+                    "MaodeObra-Cafe"
+                ],
+                "Others": [
+                    "Dryer",
+                    "Key",
+                    "Other"
+                ],
+                "Papel Pack": [
+                    "Diversos Papel Pack",
+                    "Gloves",
+                    "Handsoap",
+                    "Iva-PapelPack",
+                    "KitchenRoll",
+                    "Sunset Floor Cleaner",
+                    "Toalha de mao",
+                    "Toiletpaper",
+                    "Trashbag 120l",
+                    "Trashbag Toilet"
+                ],
+                "Papelaria": [
+                    "Caneta",
+                    "Design",
+                    "Diversos-Papelaria",
+                    "Ink",
+                    "Lápis",
+                    "Multicopias",
+                    "Plastificaçao"
+                ],
+                "Refund": [
+                    "Airbnb",
+                    "Refund"
+                ],
+                "The Project 50": [
+                    "Architect Project"
+                ],
+                "Transporte": [
+                    "Bus",
+                    "UberCopter"
+                ],
+                "Wages": [
+                    "2x2x2",
+                    "barShift",
+                    "Clarita-wages",
+                    "Cleaning",
+                    "Dinner",
+                    "Excel",
+                    "Food Staff",
+                    "Manager",
+                    "Marta-wages",
+                    "Night shift",
+                    "Pancakes",
+                    "Reception Shift"
+                ],
+                "shopping": [
+                    "Bag"
+                ]
+            };
 
-    <!-- A MÁGICA DO JAVASCRIPT AQUI -->
-    <script>
-        // 1. O "Banco de Dados" secreto que fica no navegador
-        const subcategoriasPorCategoria = {
-            "Adjust": [
-                "Adjust"
-            ],
-            "Annualidad-Fixa": [
-                "Aqua Lab Water Test",
-                "Gas inspection",
-                "INTERPREV-Fiscalisacao",
-                "INTERPREV-Segurancaesaude",
-                "License",
-                "SOPFOGO-Extinctores",
-                "SOPFOGO-Manutencao Central Incendio",
-                "SPA"
-            ],
-            "BBQParty": [
-                "BBQfood",
-                "decoration"
-            ],
-            "Bar": [
-                "Apple Cider",
-                "Beer",
-                "Beer 1L",
-                "Cachaça",
-                "Coca",
-                "Fruit Cider",
-                "Fruits bar",
-                "Furniture",
-                "Green Wine",
-                "Ice tea",
-                "Ice cube – Bar",
-                "Liqueur",
-                "Red Bull",
-                "Sangria",
-                "Sprite",
-                "Vinho tinto",
-                "Water"
-            ],
-            "Bar-Mojito": [
-                "icecube",
-                "Limao",
-                "Mint",
-                "Rhum",
-                "Snacks",
-                "SodaWater"
-            ],
-            "Bed Bugs": [
-                "Desinfection",
-                "Diverso – bed bug",
-                "laundry",
-                "Weapons"
-            ],
-            "Bike": [
-                "Fixing",
-                "Rubber"
-            ],
-            "Bpi": [
-                "Aliguer TPEREDUNICRE MENSAL",
-                "Fees",
-                "Madalena8-BPI",
-                "Paylink"
-            ],
-            "Café da manhã": [
-                "Banana",
-                "Butter",
-                "Cacao",
-                "Canela",
-                "Coffee",
-                "Coffee filter",
-                "Flakes",
-                "Flour",
-                "Fruits",
-                "Gas-Café da manhã",
-                "Jam",
-                "Milk",
-                "Muesli",
-                "Oil",
-                "Peanut butter",
-                "pepper",
-                "Salt",
-                "Sugar",
-                "Tea",
-                "Vegan"
-            ],
-            "Chill Pills": [
-                "Pills"
-            ],
-            "Cleaning": [
-                "Bleach Toilet",
-                "Cifi",
-                "Dishwash Liquid",
-                "Diverso-Cleaning",
-                "Glass Cleaner",
-                "Mistolin",
-                "Mop",
-                "saco10l",
-                "Softner",
-                "Sponges",
-                "Ttrash bag 50l",
-                "Washing Powder"
-            ],
-            "Commission": [
-                "Airbnb cancelation",
-                "Airbnb comission",
-                "Booking Other taxs",
-                "Booking Payment commision"
-            ],
-            "Despesas Pessoais": [
-                "Adrien",
-                "Invest",
-                "Marketing",
-                "Rent Adri",
-                "Van"
-            ],
-            "DinnerNight": [
-                "Food"
-            ],
-            "Drop": [
-                "Adrien drop",
-                "Deposit Drop",
-                "From MB to Adrien Money",
-                "From Drop to Adrien Money",
-                "Jar",
-                "From Adrian Money to Drop",
-                "From Bpi to Revolut",
-                "From Paypal to Revolut",
-                "From MB to Drop"
-            ],
-            "Hostel furnitures": [
-                "Bathroom",
-                "Bedroom",
-                "Bedroom\"Blankets\"",
-                "Bedroom\"Sheets\"",
-                "Electromenager",
-                "General",
-                "Kitchen",
-                "Plants",
-                "Rooftop",
-                "Staff"
-            ],
-            "Impostos": [
-                "Imi",
-                "Imi10",
-                "Imi8",
-                "INPI",
-                "IRS",
-                "IVA",
-                "Seg.Soc."
-            ],
-            "Insurance": [
-                "Aggema",
-                "Auto",
-                "CFE",
-                "Madalena10",
-                "Madalena8",
-                "Res.Civ.Hostel"
-            ],
-            "Liquor Bar": [
-                "Amarguinha",
-                "Aperol",
-                "Beirao",
-                "Ginha",
-                "Maciera",
-                "Medronho",
-                "Pastel de Nata",
-                "Port Wine"
-            ],
-            "Lollipop": [
-                "Lollipop"
-            ],
-            "Mada8": [
-                "Administracao",
-                "Obra"
-            ],
-            "Marketing": [
-                "Others-marketing"
-            ],
-            "Mensalidade-Fixa": [
-                "ÁguaFAGAR",
-                "CityTax",
-                "Cloudbeds",
-                "Contabilidade",
-                "EnergiaEDP",
-                "Gaz",
-                "NOSInternet",
-                "Spotify"
-            ],
-            "Obra": [
-                "\"NomeoftheProject\"",
-                "MaodeObra\"NomeoftheProject\"",
-                "Materiel\"NomeoftheProject\"",
-                "Tools\"NomeoftheProject\""
-            ],
-            "Obra-\"2025\"": [
-                "Agua\"2025\"",
-                "Eletricidade\"2025\"",
-                "Furnitures2025\"",
-                "Incêncio\"2025\"",
-                "Mao-de-obra\"2025\"",
-                "Material\"2025\"",
-                "Tools\"2025\""
-            ],
-            "Obra-\"2026\"": [
-                "Building/Construction/Company\"2026\"",
-                "Cafe/food\"2026\"",
-                "Furnitures2026\"",
-                "Incêncio\"2026\"",
-                "Mao-de-obra\"2026\"",
-                "Material\"2026\"",
-                "Material/Tools\"2026\"",
-                "Project/Admin\"2026\"",
-                "Tools\"2026\"",
-                "Uber/ Transporte\"2026\""
-            ],
-            "Obra-\"Beds\"": [
-                "Bunkbeds"
-            ],
-            "Obra-\"FavelaRecycling\"": [
-                "furnitures\"FavelaRecycling\"",
-                "Material\"FavelaRecycling\""
-            ],
-            "Obra-\"NomedoProject\"": [
-                "Furnitures\"NomedoProject\"",
-                "MaodeObra\"NomedoProject\"",
-                "material\"NomedoProject\""
-            ],
-            "Obra-\"Project Cafe\"": [
-                "Furnitures\"Project Cafe\"",
-                "MaodeObra\"Project Cafe\"",
-                "material\"Project Cafe\""
-            ],
-            "Obra-\"RoofTop\"": [
-                "Furniture\"RoofTop\"",
-                "MaodeObra\"RoofTop\"",
-                "Tools\"RoofTop\""
-            ],
-            "Obra-Cafe": [
-                "Furnitures-Cafe",
-                "MaodeObra-Cafe",
-                "Material/Tools-Cafe",
-                "MaodeObra-Cafe"
-            ],
-            "Others": [
-                "Dryer",
-                "Key",
-                "Other"
-            ],
-            "Papel Pack": [
-                "Diversos Papel Pack",
-                "Gloves",
-                "Handsoap",
-                "Iva-PapelPack",
-                "KitchenRoll",
-                "Sunset Floor Cleaner",
-                "Toalha de mao",
-                "Toiletpaper",
-                "Trashbag 120l",
-                "Trashbag Toilet"
-            ],
-            "Papelaria": [
-                "Caneta",
-                "Design",
-                "Diversos-Papelaria",
-                "Ink",
-                "Lápis",
-                "Multicopias",
-                "Plastificaçao"
-            ],
-            "Refund": [
-                "Airbnb",
-                "Refund"
-            ],
-            "The Project 50": [
-                "Architect Project"
-            ],
-            "Transporte": [
-                "Bus",
-                "UberCopter"
-            ],
-            "Wages": [
-                "2x2x2",
-                "barShift",
-                "Clarita-wages",
-                "Cleaning",
-                "Dinner",
-                "Excel",
-                "Food Staff",
-                "Manager",
-                "Marta-wages",
-                "Night shift",
-                "Pancakes",
-                "Reception Shift"
-            ],
-            "shopping": [
-                "Bag"
-            ]
-        };
+            // 2. Pegar as caixinhas pelo ID
+            const categoriaSelect = document.getElementById('id_categoria');
+            const subcategoriaSelect = document.getElementById('id_subcategoria');
 
-        // 2. Pegar as caixinhas pelo ID
-        const categoriaSelect = document.getElementById('id_categoria');
-        const subcategoriaSelect = document.getElementById('id_subcategoria');
+            // 3. Ouvir o evento de "mudança" na categoria
+            categoriaSelect.addEventListener('change', function () {
+                const categoriaEscolhida = this.value; // Pega o que o usuário escolheu
 
-        // 3. Ouvir o evento de "mudança" na categoria
-        categoriaSelect.addEventListener('change', function () {
-            const categoriaEscolhida = this.value; // Pega o que o usuário escolheu
+                // Limpa as opções antigas da subcategoria
+                subcategoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a subcategoria...</option>';
 
-            // Limpa as opções antigas da subcategoria
-            subcategoriaSelect.innerHTML = '<option value="" disabled selected>Selecione a subcategoria...</option>';
-
-            // 4. Se a categoria escolhida existir na nossa lista, preenche as subcategorias
-            if (subcategoriasPorCategoria[categoriaEscolhida]) {
-                subcategoriasPorCategoria[categoriaEscolhida].forEach(function (subcategoria) {
-                    const option = document.createElement('option');
-                    option.value = subcategoria;
-                    option.textContent = subcategoria;
-                    subcategoriaSelect.appendChild(option);
-                });
-            }
-        });
-    </script>
+                // 4. Se a categoria escolhida existir na nossa lista, preenche as subcategorias
+                if (subcategoriasPorCategoria[categoriaEscolhida]) {
+                    subcategoriasPorCategoria[categoriaEscolhida].forEach(function (subcategoria) {
+                        const option = document.createElement('option');
+                        option.value = subcategoria;
+                        option.textContent = subcategoria;
+                        subcategoriaSelect.appendChild(option);
+                    });
+                }
+            });
+        </script>
 </body>
 
 </html>

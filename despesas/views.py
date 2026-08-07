@@ -29,7 +29,17 @@ def criar_despesa(request):
             data=data, valor=valor, origem=origem, categoria=categoria,
             subcategoria=subcategoria, numero=numero, info=info, descricao=descricao
         )
-        return redirect('home')
+        # Pega o valor do botão que foi clicado
+        acao = request.POST.get('acao')
+        
+        if acao == 'salvar_novo':
+            # Se clicou no azul, recarrega a própria página de novo lançamento
+            return redirect('criar_despesa')
+        else:
+            # Se clicou no verde (ou apertou Enter), volta para a página inicial
+            return redirect('home')
+    
+   
     
     return render(request, 'novo_lancamento.html')
 
