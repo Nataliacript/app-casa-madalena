@@ -21,12 +21,17 @@ O QUE PRECISO FAZER AGORA:
 
 
 CHAT GLM-4.7
-
 https://chat.z.ai/s/396a21ba-8883-4380-b7aa-ca342a4b24b0
+https://chat.z.ai/c/7b236e7d-ba29-46f0-98ea-e80460ac97dd
+
 
 Render - hostel de site e o bancod e dados
 nataliacript@gmail.com
 Render2024*
+Para acompanhar atualizacoes
+https://dashboard.render.com/web/srv-d9q9o8u417fc73frdkvg/logs?t=app&r=live
+
+
 
 Github
 nataliacript@gmail.com
@@ -36,4 +41,15 @@ e-mail
 nataliacript@gmail.com
 Novoemail2025
 
+Site online
+https://app-casa-madalena.onrender.com/
+
+Site offline
+http://localhost:8000/
+
+
+como fazer para Visual studio para que eu possa abrir e fechar codigos? 
+tem jeito de melhorar para nao ter que descer tanto a tela?
+# region NomeDoBloco
+# endregion
 

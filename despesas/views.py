@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 import openpyxl
 from openpyxl.utils import get_column_letter
+from datetime import datetime, date
 
 
 
@@ -177,7 +178,7 @@ def resultado_page(request):
             palavras_que_NAOviram_dinheiro = [
                 'quantidade', 'qtd', 'mês', 'mes', 'month', 'dia', 'day', 
                 'id', 'código', 'codigo', 'code', 'número', 'numero', 'year', 'ano',
-                'unidade', 'item', 'status', 'pago', 'categoria', 'subcategoria'
+                'unidade', 'item', 'status', 'pago', 'categoria', 'subcategoria','Nights'
             ]
             
             # Pega os cabeçalhos da primeira linha para saber o nome das colunas
@@ -194,6 +195,14 @@ def resultado_page(request):
                 for coluna_idx, cell in enumerate(row):
                     estilos_css = "border: 1px solid #d4d4d4; padding: 5px 10px;"
                     valor = cell.value if cell.value is not None else ""
+
+                    # NOVO: Se o Excel identificou como Data, formata para Mês/Ano
+                    if isinstance(valor, (datetime, date)):
+                        valor = valor.strftime('%m/%Y')
+                    
+                    # Verifica se é exatamente uma string vazia (""). 
+                    if valor == "":
+                        estilos_css = "border: none; padding: 0;"
                     
                     # 1. Fundo (Background)
                     if cell.fill and cell.fill.fgColor:
@@ -216,19 +225,33 @@ def resultado_page(request):
                             estilos_css += f"font-size: {tamanho_px}px;"
                         if cell.font.bold:
                             estilos_css += "font-weight: bold;"
-                    
-                    # 3. A LÓGICA INVERTIDA: Tudo vira dinheiro, menos a lista negra
+
+                    # 3. A LÓGICA INTELIGENTE (Dinheiro, Porcentagem, Vizinho ou Normal)
                     if isinstance(valor, (int, float)):
-                        # Descobre qual é o nome dessa coluna (cabeçalho)
                         nome_da_coluna = cabecalhos[coluna_idx] if coluna_idx < len(cabecalhos) else ""
+                        nao_e_dinheiro = False
                         
-                        # Verifica se o nome da coluna TEM alguma palavra da lista negra
-                        if any(palavra in nome_da_coluna for palavra in palavras_que_NAOviram_dinheiro):
-                            # ESTÁ NA LISTA NEGRA! Fica só com 2 casas decimais (ex: 5.00)
+                        # REGRA A: É PORCENTAGEM nativa do Excel?
+                        if cell.number_format and '%' in str(cell.number_format):
+                            valor = f"{valor * 100:.2f}%"
+                            nao_e_dinheiro = True
+                        
+                        # REGRA B: A célula AO LADO esquerda diz "Nights"?
+                        elif coluna_idx > 0:
+                            celula_esquerda = row[coluna_idx - 1]
+                            if celula_esquerda.value and isinstance(celula_esquerda.value, str):
+                                if 'nights' in celula_esquerda.value.lower():
+                                    valor = f"{valor:.0f}"
+                                    nao_e_dinheiro = True
+                                    
+                        # REGRA C: Está na lista negra pelo cabeçalho da coluna?
+                        elif any(palavra in nome_da_coluna for palavra in palavras_que_NAOviram_dinheiro):
                             valor = f"{valor:.2f}"
-                        else:
-                            # NÃO ESTÁ NA LISTA NEGRA! Vira dinheiro! (ex: $1,500.00)
-                            valor = f"${valor:,.2f}"
+                            nao_e_dinheiro = True
+                            
+                        # REGRA D: Se não caiu em nenhuma regra acima, vira Dinheiro!
+                        if not nao_e_dinheiro:
+                            valor = f"${valor:,.2f}"        
                     
                     html_builder.append(f'<td style="{estilos_css}">{valor}</td>')
                 html_builder.append('</tr>')
