@@ -240,7 +240,7 @@ def resultado_page(request):
                         elif coluna_idx > 0:
                             celula_esquerda = row[coluna_idx - 1]
                             if celula_esquerda.value and isinstance(celula_esquerda.value, str):
-                                if 'nights' in celula_esquerda.value.lower():
+                                if 'Number of Beds' in celula_esquerda.value.lower():
                                     valor = f"{valor:.0f}"
                                     nao_e_dinheiro = True
                                     
