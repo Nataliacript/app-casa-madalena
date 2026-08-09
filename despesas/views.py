@@ -12,19 +12,19 @@ from datetime import datetime, date
 
 
 
+
 @login_required(login_url='/login/')
 def listar_despesas(request):
-    despesas = Despesa.objects.all() 
+    # SUPER PORTEIRO: Verifica o perfil do usuário logado
+    print(f"DEBUG USUARIO: O usuário {request.user.username} tem o perfil: {request.user.perfil.tipo}") # Linha deDebug
     
-    # NOVO: Calcula a soma de todos os valores da coluna 'valor'
-    total_geral = despesas.aggregate(total=Sum('valor'))['total']
-    if total_geral is None:
-        total_geral = 0  # Se não tiver despesas, o total é 0
-        
-    return render(request, 'lista_despesas.html', {
-        'despesas': despesas,
-        'total_geral': total_geral # NOVO: Envia o total para o HTML
-    })
+    if request.user.perfil.tipo == 'extras':
+        print("DEBUG USUARIO: Bloqueado! Redirecionando para extras.") # Linha de Debug
+        return redirect('listar_extras')
+    
+    
+    despesas = Despesa.objects.all() 
+    return render(request, 'lista_despesas.html', {'despesas': despesas})
 
 @login_required(login_url='/login/')
 def criar_despesa(request):
@@ -95,9 +95,12 @@ def tela_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            
+            # NOVO: Redireciona automaticamente se for de Extras
+            if user.perfil.tipo == 'extras':
+                return redirect('listar_extras')
             return redirect('home')
         else:
-            # Se errar a senha, recarrega a página com erro
             return render(request, 'login.html', {'erro': 'Usuário ou senha incorretos!'})
     return render(request, 'login.html')
 
@@ -275,11 +278,21 @@ def resultado_page(request):
 
 @login_required(login_url='/login/')
 def listar_extras(request):
+    # PORTEIRO: Se for usuário comum de despesas, não deixa ver os extras
+    if request.user.perfil.tipo not in ['admin', 'extras']:
+        return redirect('home')
+        
+    # Se ele for admin ou de extras, continua e mostra a página
     extras = Extra.objects.all().order_by('-data')
     return render(request, 'lista_extras.html', {'extras': extras})
 
 @login_required(login_url='/login/')
 def novo_extra(request):
+    # PORTEIRO: Se for usuário comum de despesas, não deixa ver os extras
+    if request.user.perfil.tipo not in ['admin', 'extras']:
+        return redirect('home')
+
+    
     produtos_json = "[]"
     origens_json = "[]"
 
@@ -318,7 +331,8 @@ def novo_extra(request):
             amount=amount,
             unitary_value=unitary_value,
             total=total_calculado,
-            origin=request.POST.get('origin')
+            origin=request.POST.get('origin'),
+            description=request.POST.get('description')
         )
         return redirect('listar_extras')
 
@@ -327,6 +341,9 @@ def novo_extra(request):
 
 @login_required(login_url='/login/')
 def upload_config_extras(request):
+    # PORTEIRO: Se for usuário comum de despesas, não deixa ver os extras
+    if request.user.perfil.tipo not in ['admin', 'extras']:
+        return redirect('home')
     if request.method == 'POST':
         if 'arquivo_produtos' in request.FILES:
             ConfigProduto.objects.create(arquivo=request.FILES['arquivo_produtos'])
@@ -344,3 +361,61 @@ def excluir_resultado(request, id):
     
     # Volta para a página de resultados
     return redirect('resultado_page')
+
+
+@login_required(login_url='/login/')
+def excluir_extra(request, id):
+    if request.user.perfil.tipo not in ['admin', 'extras']:
+        return redirect('listar_extras')
+    
+    extra = Extra.objects.get(id=id)
+    extra.delete()
+    return redirect('listar_extras')
+
+@login_required(login_url='/login/')
+def editar_extra(request, id):
+    if request.user.perfil.tipo not in ['admin', 'extras']:
+        return redirect('listar_extras')
+        
+    extra = Extra.objects.get(id=id)
+    produtos_json = "[]"
+    origens_json = "[]"
+
+    # Tenta ler o último Excel de Produtos (igual fazemos no novo)
+    config_prod = ConfigProduto.objects.all().order_by('-id').first()
+    if config_prod:
+        try:
+            df_prod = pd.read_excel(config_prod.arquivo.path)
+            dict_produtos = dict(zip(df_prod.iloc[:, 0], df_prod.iloc[:, 1]))
+            produtos_json = json.dumps(dict_produtos)
+        except: pass
+
+    # Tenta ler o último Excel de Origens
+    config_orig = ConfigOrigem.objects.all().order_by('-id').first()
+    if config_orig:
+        try:
+            df_orig = pd.read_excel(config_orig.arquivo.path)
+            origens_json = json.dumps(df_orig.iloc[:, 0].tolist())
+        except: pass
+
+    if request.method == 'POST':
+        amount = float(request.POST.get('amount') or 0)
+        unitary_value = float(request.POST.get('unitary_value') or 0)
+        total_calculado = amount * unitary_value
+
+        # Atualiza os dados do objeto existente
+        extra.data = request.POST.get('data')
+        extra.product = request.POST.get('product')
+        extra.amount = amount
+        extra.unitary_value = unitary_value
+        extra.total = total_calculado
+        extra.origin = request.POST.get('origin')
+        extra.description = request.POST.get('description')
+        extra.save()
+        return redirect('listar_extras')
+
+    return render(request, 'editar_extra.html', {
+        'extra': extra,
+        'produtos_json': produtos_json, 
+        'origens_json': origens_json
+    })

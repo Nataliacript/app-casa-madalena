@@ -1,4 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class Despesa(models.Model):
     data = models.DateField()
@@ -36,6 +40,7 @@ class Extra(models.Model):
     unitary_value = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     origin = models.CharField(max_length=100)
+    description = models.TextField(blank=False, null=False)
 
     def __str__(self):
         return f"{self.product} - {self.total}"
@@ -46,3 +51,25 @@ class ConfigProduto(models.Model):
 
 class ConfigOrigem(models.Model):
     arquivo = models.FileField(upload_to='config_extras/')
+
+
+
+
+class Perfil(models.Model):
+    OPCOES_DE_PERFIL = (
+        ('admin', 'Administrador'),
+        ('despesas', 'Financeiro (Despesas)'),
+        ('extras', 'Operacional (Apenas Extras)'),
+    )
+    
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=15, choices=OPCOES_DE_PERFIL, default='despesas')
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.get_tipo_display()}"
+
+# Sinal automático: Sempre que um User for criado, cria um Perfil pra ele junto
+@receiver(post_save, sender=User)
+def criar_perfil_usuario(sender, instance, created, **kwargs):
+    if created:
+        Perfil.objects.create(usuario=instance)

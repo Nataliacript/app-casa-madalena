@@ -76,8 +76,8 @@
 
 <body>
 	<div class="container">
-		<a href="{% url 'listar_extras' %}" class="btn-voltar">← Voltar</a>
-		<h1>Cadastrar Extra</h1>
+		<a href="{% url 'listar_extras' %}" class="btn-voltar">← Back</a>
+		<h1>New Extra</h1>
 
 		<!-- Área de Upload das Planilhas de Configuração -->
 		<div class="config-box">
@@ -102,7 +102,7 @@
 		<!-- Formulário de Cadastro -->
 		<form method="POST" action="{% url 'novo_extra' %}">
 			{% csrf_token %}
-			<div><label>Data:</label> <input type="date" name="data" required></div>
+			<div><label>Date:</label> <input type="date" name="data" required></div>
 
 			<div>
 				<label>Product:</label>
@@ -118,17 +118,25 @@
 						required readonly style="background-color: #f8f9fa;"></div>
 			</div>
 
-			<div><label>Total (Calculado):</label> <input type="text" id="id_total" name="total" readonly
+			<div><label>Total:</label> <input type="text" id="id_total" name="total" readonly
 					style="background-color: #d4edda; font-weight: bold; color: green;"></div>
 
 			<div>
-				<label>Origin:</label>
+				<label>Payment Method:</label>
 				<select id="id_origin" name="origin" required>
 					<option value="" disabled selected>Selecione...</option>
 				</select>
 			</div>
 
-			<button type="submit" class="btn-salvar">Salvar Extra</button>
+			<div>
+				<label><b>Description:</b></label><br>
+				<textarea name="description" rows="4" placeholder="Detalhes adicionais..."
+					style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;"
+					required></textarea>
+			</div>
+
+
+			<button type="submit" class="btn-salvar">Salve Extra</button>
 		</form>
 	</div>
 

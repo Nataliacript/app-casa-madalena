@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Extra</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        div {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-salvar {
+            width: 100%;
+            padding: 12px;
+            background-color: #ffc107;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-voltar {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        .config-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="{% url 'listar_extras' %}" class="btn-voltar">← Back</a>
+        <h1>✏️ Edit Extra</h1>
+
+        <div class="config-box">
+            <h3>⚙️ Configurar Listas</h3>
+            <form method="POST" action="{% url 'upload_config_extras' %}" enctype="multipart/form-data"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                {% csrf_token %}
+                <div><label>Excel de Produtos/Preços:</label><input type="file" name="arquivo_produtos" accept=".xlsx"
+                        style="padding: 5px; font-size: 12px;"></div>
+                <div><label>Excel de Origens:</label><input type="file" name="arquivo_origens" accept=".xlsx"
+                        style="padding: 5px; font-size: 12px;"></div>
+                <button type="submit"
+                    style="grid-column: 1 / -1; background: #6c757d; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">Atualizar
+                    Listas</button>
+            </form>
+        </div>
+
+        <!-- Note o action enviando para a rota de editar -->
+        <form method="POST" action="{% url 'editar_extra' extra.id %}">
+            {% csrf_token %}
+            <div><label>Date:</label> <input type="date" name="data" value="{{ extra.data|date:'Y-m-d' }}" required>
+            </div>
+
+            <div>
+                <label>Product:</label>
+                <select id="id_product" name="product" required>
+                    <option value="" disabled>Selecione...</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div><label>Amount:</label> <input type="number" step="1" id="id_amount" name="amount"
+                        value="{{ extra.amount }}" required oninput="calcularTotal()"></div>
+                <div><label>Unitary Value:</label> <input type="number" step="0.01" id="id_unitary" name="unitary_value"
+                        value="{{ extra.unitary_value }}" required readonly style="background-color: #f8f9fa;"></div>
+            </div>
+
+            <div><label>Total:</label> <input type="text" id="id_total" name="total" value="R$ {{ extra.total }}"
+                    readonly style="background-color: #d4edda; font-weight: bold; color: green;"></div>
+
+            <div>
+                <label>Payment Method:</label>
+                <select id="id_origin" name="origin" required>
+                    <option value="" disabled>Selecione...</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Description:</label>
+                <textarea name="description" rows="4" required>{{ despesa.description }}</textarea>
+            </div>
+
+            <button type="submit" class="btn-salvar">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        const produtosDoExcel = {{ produtos_json| safe }};
+        const origensDoExcel = {{ origens_json| safe }};
+
+        const selectProduct = document.getElementById('id_product');
+        const selectOrigin = document.getElementById('id_origin');
+        const inputUnitary = document.getElementById('id_unitary');
+        const inputAmount = document.getElementById('id_amount');
+        const inputTotal = document.getElementById('id_total');
+
+        // Dados que já estão salvos no banco
+        const produtoSalvo = "{{ extra.product }}";
+        const origemSalva = "{{ extra.origin }}";
+
+        // 1. Preenche os Selects
+        for (let [nome, preco] of Object.entries(produtosDoExcel)) {
+            let option = document.createElement('option');
+            option.value = nome;
+            option.textContent = nome;
+            option.dataset.preco = preco;
+            selectProduct.appendChild(option);
+        }
+        origensDoExcel.forEach(origem => {
+            let option = document.createElement('option');
+            option.value = origem;
+            option.textContent = origem;
+            selectOrigin.appendChild(option);
+        });
+
+        // 2. Força a seleção do que já estava salvo
+        selectProduct.value = produtoSalvo;
+        selectOrigin.value = origemSalva;
+
+        // 3. Calcula o total com os valores antigos que vieram do banco
+        function calcularTotal() {
+            let amount = parseFloat(inputAmount.value) || 0;
+            let unitary = parseFloat(inputUnitary.value) || 0;
+            inputTotal.value = "R$ " + (amount * unitary).toFixed(2);
+        }
+
+        // 4. Dispara a mudança para preencher o valor unitário correto (caso o usuário troque o produto)
+        selectProduct.addEventListener('change', function () {
+            let opcaoSelecionada = this.options[this.selectedIndex];
+            inputUnitary.value = opcaoSelecionada.dataset.preco;
+            calcularTotal();
+        });
+
+        // Força o cálculo assim que a página carrega
+        calcularTotal();
+    </script>
+</body>
+
+</html>

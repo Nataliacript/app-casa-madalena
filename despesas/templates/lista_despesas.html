@@ -119,7 +119,8 @@
                 <a href="{% url 'exportar_excel' %}" class="btn-excel">📥 Download Excel file</a>
                 <a href="{% url 'resultado_page' %}" class="btn-novo" style="background-color: #fd7e14;">📊 Results
                 </a>
-                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">+ New Extras</a>
+                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">Extras</a>
+
             </div>
 
             <!-- Botão de Sair no canto direito -->
@@ -148,17 +149,15 @@
 
 
             <!-- Rodapé da Tabela com o Total -->
+            <!-- Rodapé da Tabela (O JavaScript vai preencher o valor) -->
             <tfoot>
                 <tr>
                     <th colspan="5" style="text-align: right; font-size: 16px; padding: 15px;">TOTAL:</th>
-
-                    <!-- A MÁGICA ESTÁ NO 'white-space: nowrap' AQUI -->
-                    <th
+                    <th id="total-dinamico"
                         style="color: green; font-size: 18px; font-weight: bold; white-space: nowrap; min-width: 130px;">
-                        $ {{ total_geral|floatformat:2 }}
+                        $ 0,00
                     </th>
-
-                    <th colspan="3"></th>
+                    <th></th>
                 </tr>
             </tfoot>
 
@@ -189,22 +188,54 @@
         </table>
     </div>
 
-    <!-- NOVO: Bibliotecas JavaScript necessárias (jQuery e DataTables) -->
+
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-
-    <!-- NOVO: Script que liga a mágica (em português e ordenando por data) -->
     <script>
         $(document).ready(function () {
-            $('#minhaTabela').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' // Traduz para português
-                },
-                order: [[0, 'desc']], // Ordena pela primeira coluna (Data) de forma decrescente (mais recente primeiro)
-                pageLength: 100, // Mostra 100 linhas por página
-                columnDefs: [
-                    { orderable: false, targets: -1 } // Desativa a ordenação na última coluna (Ações), pra não bagunçar os botões
-                ]
+            var table = $('#minhaTabela').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
+                order: [[0, 'desc']],
+                pageLength: 100,
+
+                // FORÇA o DataTables a reconhecer exatamente o que é cada coluna
+                columns: [
+                    { data: 0 }, // 0: Date (Livre para busca)
+                    { data: 1 }, // 1: Money From (Livre para busca)
+                    { data: 2 }, // 2: Category (Livre para busca)
+                    { data: 3 }, // 3: Subcategory (Livre para busca)
+                    { data: 4 }, // 4: Number (Livre para busca)
+                    { data: 5 }, // 5: Value(Livre para busca)
+                    { data: 6 }, // 5: Reference (Livre para busca)
+                    { data: 7 }, // 5: Description(Livre para busca)
+                    { data: 8, orderable: false, searchable: false } // 8: Ações (BLOQUEADA para busca e ordenar)
+                ],
+
+                drawCallback: function () {
+                    var api = this.api();
+                    var dadosVisiveis = api.column(5, { page: 'current' }).data();
+
+                    var total = 0;
+
+                    if (dadosVisiveis.length > 0) {
+                        dadosVisiveis.each(function (valor) {
+                            var valorLimpo = valor.replace("$ ", "").trim();
+
+                            if (valorLimpo.includes(',')) {
+                                valorLimpo = valorLimpo.replace(/\./g, "").replace(",", ".");
+                            }
+
+                            var numero = parseFloat(valorLimpo);
+
+                            if (!isNaN(numero)) {
+                                total += numero;
+                            }
+                        });
+                    }
+
+                    var totalFormatado = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    $(api.column(5).footer()).html(totalFormatado);
+                }
             });
         });
     </script>
