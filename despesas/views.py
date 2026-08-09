@@ -236,11 +236,14 @@ def resultado_page(request):
                             valor = f"{valor * 100:.2f}%"
                             nao_e_dinheiro = True
                         
-                        # REGRA B: A célula AO LADO esquerda diz "Nights"?
+                        # NOVA REGRA B: A célula AO LADO esquerda diz "Beds"?
                         elif coluna_idx > 0:
                             celula_esquerda = row[coluna_idx - 1]
-                            if celula_esquerda.value and isinstance(celula_esquerda.value, str):
-                                if 'Number of Beds' in celula_esquerda.value.lower():
+                            if celula_esquerda.value:
+                                # Converte TUDO para texto minúsculo e tira espaços nas pontas
+                                texto_vizinho = str(celula_esquerda.value).lower().strip()
+                                
+                                if 'beds' in texto_vizinho:
                                     valor = f"{valor:.0f}"
                                     nao_e_dinheiro = True
                                     
