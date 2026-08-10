@@ -24,12 +24,15 @@ class Command(BaseCommand):
                 defaults={'is_staff': u.get('staff', False), 'is_superuser': u.get('superuser', False)}
             )
             
+            # A MAGICA ESTÁ AQUI: Força a senha SEMPRE!
+            # Se o usuário já existir, ele sobrescreve a senha antiga pela nova.
+            user.set_password(u['password'])
+            user.save()
+            
             if criado:
-                user.set_password(u['password'])
-                user.save()
                 self.stdout.write(self.style.SUCCESS(f"Usuário '{u['username']}' criado com sucesso!"))
             else:
-                self.stdout.write(self.style.WARNING(f"Usuário '{u['username']}' já existe. Pulando..."))
+                self.stdout.write(self.style.WARNING(f"Usuário '{u['username']}' já existia. Senha e Perfil ATUALIZADOS!"))
 
             # Garante que o perfil de permissão existe
             Perfil.objects.get_or_create(
