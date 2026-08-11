@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Family & Friends</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* NOVO: Forçando a tabela a ficar menor e mais elegante */
+        table.dataTable {
+            font-size: 13px;
+        }
+
+        /* Diminui a letra de toda a tabela */
+
+        th,
+        td {
+            padding: 6px 8px !important;
+            /* Diminui o espaço dentro das células (deixando mais compacto) */
+            white-space: nowrap !important;
+            /* TRAVA os números para não quebrarem de linha */
+        }
+
+        /* NOVO: Mágica exclusiva para a coluna DESCRIÇÃO (que é a 8ª coluna) */
+        th:nth-child(1),
+        td:nth-child(1) {
+            white-space: normal !important;
+            /* Permite que o texto da descrição quebre de linha */
+            min-width: 200px;
+            /* Força a coluna a ser bem grandona (pode aumentar para 400px se quiser) */
+            max-width: 400px;
+        }
+
+
+        .btn-novo {
+            display: inline-block;
+            background-color: #6f42c1;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>👨‍👩‍👧‍👦 Family & Friends</h1>
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <a href="{% url 'criar_family' %}" class="btn-novo">+ Guest</a>
+                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">← Back to
+                    Extras</a>
+            </div>
+            <div>
+                <a href="{% url 'logout' %}"
+                    style="color: #dc3545; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #dc3545; padding: 8px 15px; border-radius: 6px;">🔒
+                    Logout</a>
+            </div>
+        </div>
+        <table id="minhaTabela" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Bed Number</th>
+                    <th>Payment Date</th>
+                    <th>Check in</th>
+                    <th>Check out</th>
+                    <th>Amount/Night</th>
+                    <th>Nights</th>
+                    <th>Adults</th>
+                    <th>Total</th>
+                    <th>Payment Method</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <th colspan="9" style="text-align: right; font-size: 16px; padding: 15px;">TOTAL VISÍVEL:</th>
+                    <th id="total-dinamico"
+                        style="color: green; font-size: 18px; font-weight: bold; white-space: nowrap; min-width: 130px;">
+                    </th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
+            <tbody>
+                {% for item in familia %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.bed_number }}</td>
+                    <td>{{ item.payment_date|date:"d/m/Y" }}</td>
+                    <td>{{ item.check_in|date:"d/m/Y" }}</td>
+                    <td>{{ item.check_out|date:"d/m/Y" }}</td>
+                    <td>$ {{ item.amount_per_night }}</td>
+                    <td>{{ item.nights }}</td>
+                    <td>{{ item.adults }}</td>
+                    <td>$ {{ item.total }}</td>
+                    <td>{{ item.payment_method }}</td>
+                    <td>
+                        <a href="{% url 'editar_family' item.id %}"
+                            style="background-color: #ffc107; color: black; text-decoration:none; padding: 6px 12px; border-radius: 4px; font-size: 12px; margin-right: 5px;">Edit</a>
+                        <a href="{% url 'excluir_family' item.id %}"
+                            style="background-color: #dc3545; color: white; text-decoration:none; padding: 6px 12px; border-radius: 4px; font-size: 12px;"
+                            onclick="return confirm('Deletar este hóspede?')">Delet</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="11" style="text-align:center; padding: 20px;">Nenhum hóspede registrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var table = $('#minhaTabela').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
+                order: [[2, 'desc']], pageLength: 100,
+                columns: [
+                    { data: 0 }, { data: 1 }, { data: 2 }, { data: 3 }, { data: 4 }, { data: 5 },
+                    { data: 6 }, { data: 7 }, { data: 8 }, { data: 9 },
+                    { data: 10, orderable: false, searchable: false } // Esconde a coluna Ações da busca
+                ],
+                drawCallback: function () {
+                    var api = this.api(); var dadosVisiveis = api.column(8, { page: 'current' }).data(); var total = 0;
+                    if (dadosVisiveis.length > 0) { dadosVisiveis.each(function (valor) { var valorLimpo = valor.replace("$ ", "").trim(); if (valorLimpo.includes(',')) { valorLimpo = valorLimpo.replace(/\./g, "").replace(",", "."); } var numero = parseFloat(valorLimpo); if (!isNaN(numero)) { total += numero; } }); }
+                    $(api.column(8).footer()).html("$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

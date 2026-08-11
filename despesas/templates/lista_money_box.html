@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Extras</title>
+    <title>Expenses from Money Box</title>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <style>
         body {
@@ -26,24 +26,22 @@
             color: #333;
         }
 
-        /* NOVO: Forçando a tabela a ficar menor e mais elegante */
         table.dataTable {
-            font-size: 18px;
+            font-size: 13px;
         }
-
-        /* Diminui a letra de toda a tabela */
 
         th,
         td {
-            padding: 8px 10px !important;
+            padding: 6px 8px !important;
             /* Diminui o espaço dentro das células (deixando mais compacto) */
             white-space: nowrap !important;
             /* TRAVA os números para não quebrarem de linha */
         }
 
+
         /* NOVO: Mágica exclusiva para a coluna DESCRIÇÃO (que é a 8ª coluna) */
-        th:nth-child(7),
-        td:nth-child(7) {
+        th:nth-child(8),
+        td:nth-child(8) {
             white-space: normal !important;
             /* Permite que o texto da descrição quebre de linha */
             min-width: 300px;
@@ -51,9 +49,11 @@
             max-width: 400px;
         }
 
+
+
         .btn-novo {
             display: inline-block;
-            background-color: #17a2b8;
+            background-color: #20c997;
             color: white;
             padding: 12px;
             text-align: center;
@@ -68,83 +68,73 @@
 
 <body>
     <div class="container">
-        <h1>Reception</h1>
-
+        <h1>💰 Expenses from Money Box</h1>
         <div
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
             <div>
-                <a href="{% url 'novo_extra' %}" class="btn-novo">🍺 New Extra</a>
-                <a href="{% url 'listar_family' %}" class="btn-novo" style="background-color: #6f42c1;">👨‍👩‍👧‍👦
-                    Family & Friends</a>
-                <a href="{% url 'listar_money_box' %}" class="btn-novo" style="background-color: #20c997;">💰 Expenses
-                    from Money Box</a>
+                <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">← Back to
+                    Extras</a>
+                <a href="{% url 'criar_despesa' %}" class="btn-novo">+ New Expense</a>
+            
+         
 
-                {% if user.perfil.tipo == 'admin' %}
-                <a href="{% url 'home' %}" class="btn-novo" style="background-color: #6c757d;">← Back to the Menu</a>
-                {% endif %}
+                <!-- Botões de CRUD virão na Parte 2 -->
             </div>
             <div>
                 <a href="{% url 'logout' %}"
                     style="color: #dc3545; text-decoration: none; font-weight: bold; font-size: 16px; border: 2px solid #dc3545; padding: 8px 15px; border-radius: 6px;">🔒
-                    Logout</a>
+                  Logout</a>
             </div>
         </div>
-
         <table id="minhaTabela" class="display" style="width:100%">
             <thead>
                 <tr>
-                    <!-- SÃO EXATAMENTE 7 COLUNAS AQUI -->
                     <th>Date</th>
-                    <th>Product</th>
-                    <th>Amount</th>
-                    <th>Unitary Value</th>
-                    <th>Total</th>
-                    <th>Payment</th>
+                    <th>Money From</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Number</th>
+                    <th>Value</th>
+                    <th>Reference</th>
                     <th>Description</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
-
-            <!-- Rodapé da Tabela (O JavaScript vai preencher o valor) -->
             <tfoot>
                 <tr>
-                    <th colspan="5" style="text-align: right; font-size: 16px; padding: 15px;">TOTAL VISÍVEL:</th>
+                    <th colspan="5" style="text-align: right; font-size: 16px; padding: 15px;">TOTAL:</th>
                     <th id="total-dinamico"
                         style="color: green; font-size: 18px; font-weight: bold; white-space: nowrap; min-width: 130px;">
+                        $ 0,00
                     </th>
                     <th></th>
                 </tr>
             </tfoot>
-
             <tbody>
-                {% for item in extras %}
+                {% for item in gastos %}
                 <tr>
-                    <!-- SÃO EXATAMENTE 7 COLUNAS AQUI TAMBÉM -->
                     <td>{{ item.data|date:"d/m/Y" }}</td>
-                    <td>{{ item.product }}</td>
-                    <td>{{ item.amount }}</td>
-                    <td>$ {{ item.unitary_value }}</td>
-                    <td style="font-weight:bold; color:green;">$ {{ item.total }}</td>
-                    <td>{{ item.origin }}</td>
-                    <td>{{ item.description }}</td>
+                    <td>{{ item.origem }}</td>
+                    <td>{{ item.categoria }}</td>
+                    <td>{{ item.subcategoria }}</td>
+                    <td>{{ item.numero }}</td>
+                    <td>R$ {{ item.valor }}</td>
+                    <td>{{ item.info }}</td>
+                    <td>{{ item.descricao }}</td>
                     <td>
-                        <a href="{% url 'editar_extra' item.id %}"
-                            style="background-color: #ffc107; color: black; text-decoration:none; padding: 6px 12px; border-radius: 4px; font-size: 12px; margin-right: 5px;">Edit</a>
-                        <a href="{% url 'excluir_extra' item.id %}"
-                            style="background-color: #dc3545; color: white; text-decoration:none; padding: 6px 12px; border-radius: 4px; font-size: 12px;"
-                            onclick="return confirm('Are you sure you want to delete this?')">Delet</a>
+                        <a href="{% url 'editar_gastos' item.id %}" class="btn btn-edit">Edit</a>
+                        <a href="{% url 'excluir_gastos' item.id %}" class="btn btn-delete"
+                            onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
                     </td>
                 </tr>
                 {% empty %}
-                <!-- SE ESTIVER VAZIO, ELE COLOCA UMA SÓ CÉLULA QUEBRANDO AS 7 COLUNAS -->
                 <tr>
-                    <td colspan="7" style="text-align:center; padding: 20px;">Nenhum extra cadastrado.</td>
+                    <td colspan="9" style="text-align:center; padding: 20px;">Nenhum gasto registrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script>
@@ -156,19 +146,20 @@
 
                 // FORÇA o DataTables a reconhecer exatamente o que é cada coluna
                 columns: [
-                    { data: 0 }, // 0: Data (Livre para busca)
-                    { data: 1 }, // 1: Product (Livre para busca)
-                    { data: 2 }, // 2: Amount (Livre para busca)
-                    { data: 3 }, // 3: Unitary Value (Livre para busca)
-                    { data: 4 }, // 4: Total (Livre para busca)
-                    { data: 5 }, // 5: Origin (Livre para busca)
-                    { data: 6 }, // 6: Descripton (Livre para busca)
-                    { data: 7, orderable: false, searchable: false } // 6: Ações (BLOQUEADA para busca e ordenar)
+                    { data: 0 }, // 0: Date (Livre para busca)
+                    { data: 1 }, // 1: Money From (Livre para busca)
+                    { data: 2 }, // 2: Category (Livre para busca)
+                    { data: 3 }, // 3: Subcategory (Livre para busca)
+                    { data: 4 }, // 4: Number (Livre para busca)
+                    { data: 5 }, // 5: Value(Livre para busca)
+                    { data: 6 }, // 5: Reference (Livre para busca)
+                    { data: 7 }, // 5: Description(Livre para busca)
+                    { data: 8, orderable: false, searchable: false } // 8: Ações (BLOQUEADA para busca e ordenar)
                 ],
 
                 drawCallback: function () {
                     var api = this.api();
-                    var dadosVisiveis = api.column(4, { page: 'current' }).data();
+                    var dadosVisiveis = api.column(5, { page: 'current' }).data();
 
                     var total = 0;
 
@@ -188,15 +179,12 @@
                         });
                     }
 
-                    var totalFormatado = "$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    $(api.column(4).footer()).html(totalFormatado);
+                    var totalFormatado = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    $(api.column(5).footer()).html(totalFormatado);
                 }
             });
         });
     </script>
-
 </body>
-
-
 
 </html>

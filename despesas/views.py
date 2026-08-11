@@ -2,29 +2,27 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 import pandas as pd
 import json
-from .models import Despesa, ArquivoResultado, Extra, ConfigProduto, ConfigOrigem
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 import openpyxl
 from openpyxl.utils import get_column_letter
 from datetime import datetime, date
+from .models import Despesa, ArquivoResultado, Extra, ConfigProduto, ConfigOrigem, MoneyBoxExpense, FamilyFriend 
 
 
 
 
 @login_required(login_url='/login/')
 def listar_despesas(request):
-    # SUPER PORTEIRO: Verifica o perfil do usuário logado
-    print(f"DEBUG USUARIO: O usuário {request.user.username} tem o perfil: {request.user.perfil.tipo}") # Linha deDebug
-    
-    if request.user.perfil.tipo == 'extras':
-        print("DEBUG USUARIO: Bloqueado! Redirecionando para extras.") # Linha de Debug
+    # NOVA REGRA DO PORTEIRO DO DINHEIRO: Só natalia e admin podem ver as despesas originais.
+    if request.user.username not in ['admin', 'natalia']:
         return redirect('listar_extras')
-    
-    
-    despesas = Despesa.objects.all() 
-    return render(request, 'lista_despesas.html', {'despesas': despesas})
+        
+    despesas = Despesa.objects.all().order_by('-data') 
+    total_geral = despesas.aggregate(total=Sum('valor'))['total'] or 0
+    return render(request, 'lista_despesas.html', {'despesas': despesas, 'total_geral': total_geral})
+
 
 @login_required(login_url='/login/')
 def criar_despesa(request):
@@ -339,17 +337,20 @@ def novo_extra(request):
   
     return render(request, 'novo_extra.html', {'produtos_json': produtos_json, 'origens_json': origens_json})
 
-@login_required(login_url='/login/')
 def upload_config_extras(request):
-    # PORTEIRO: Se for usuário comum de despesas, não deixa ver os extras
-    if request.user.perfil.tipo not in ['admin', 'extras']:
-        return redirect('home')
     if request.method == 'POST':
         if 'arquivo_produtos' in request.FILES:
             ConfigProduto.objects.create(arquivo=request.FILES['arquivo_produtos'])
         if 'arquivo_origens' in request.FILES:
             ConfigOrigem.objects.create(arquivo=request.FILES['arquivo_origens'])
-    return redirect('novo_extra')
+    
+    # Redireciona para onde o usuário estava
+    tela_origem = request.POST.get('tela_origem')
+    
+    if tela_origem == 'family':
+        return redirect('criar_family') 
+    else:
+        return redirect('novo_extra')
 
 
 def excluir_resultado(request, id):
@@ -418,4 +419,110 @@ def editar_extra(request, id):
         'extra': extra,
         'produtos_json': produtos_json, 
         'origens_json': origens_json
+    })
+
+
+@login_required(login_url='/login/')
+def listar_money_box(request):
+    # PORTIEIRO DO MONEY BOX: Todos acessam a tela de listagem (mostra tudo que está no banco de dados). 
+    # Se for um usuário comum de Extras tentar acessar a listagem, não o impeça, pois os dados do Money Box são de conhecimento de todos.
+    gastos = MoneyBoxExpense.objects.all().order_by('-data')
+    return render(request, 'lista_money_box.html', {'gastos': gastos})
+
+# NOVA VIEW: Todos acessam o Family & Friends
+@login_required(login_url='/login/')
+def listar_family(request):
+    familia = FamilyFriend.objects.all().order_by('-payment_date')
+    return render(request, 'lista_family.html', {'familia': familia})
+
+
+
+
+@login_required(login_url='/login/')
+def criar_family(request):
+    origens_json = "[]"
+
+    config_orig = ConfigOrigem.objects.all().order_by('-id').first()
+    if config_orig:
+        try:
+            df_orig = pd.read_excel(config_orig.arquivo.path)
+            origens_json = json.dumps(df_orig.iloc[:, 0].tolist())
+        except:
+            pass
+
+    if request.method == 'POST':
+        amount = float(request.POST.get('amount_per_night') or 0)
+        nights = float(request.POST.get('nights') or 0)
+        adults = float(request.POST.get('adults') or 0)
+        
+        total_calculado = amount * nights * adults
+
+        # A TRADUÇÃO DAS DATAS: De DD/MM/AAAA para AAAA-MM-DD
+        data_pagamento = datetime.strptime(request.POST.get('payment_date'), '%d/%m/%Y').date()
+        data_checkin = datetime.strptime(request.POST.get('check_in'), '%d/%m/%Y').date()
+        data_checkout = datetime.strptime(request.POST.get('check_out'), '%d/%m/%Y').date()
+
+        FamilyFriend.objects.create(
+            name=request.POST.get('name'),
+            bed_number=request.POST.get('bed_number'),
+            payment_date=data_pagamento, # Agora no formato correto!
+            check_in=data_checkin,           # Agora no formato correto!
+            check_out=data_checkout,       # Agora no formato correto!
+            amount_per_night=amount,
+            nights=int(request.POST.get('nights')),
+            adults=int(request.POST.get('adults')),
+            total=total_calculado,
+            payment_method=request.POST.get('payment_method')
+        )
+        return redirect('listar_family')
+
+    return render(request, 'novo_guest.html', {'origens_json': origens_json})
+
+@login_required(login_url='/login/')
+def excluir_family(request, id):
+    guest = FamilyFriend.objects.get(id=id)
+    guest.delete()
+    return redirect('listar_family')
+
+@login_required(login_url='/login/')
+def editar_family(request, id):
+    guest = FamilyFriend.objects.get(id=id)
+    
+    # NOVO: Buscar as formas de pagamento do Excel, igual fazemos na criação
+    origens_do_excel = []
+    config_orig = ConfigOrigem.objects.all().order_by('-id').first()
+    if config_orig:
+        try:
+            df_orig = pd.read_excel(config_orig.arquivo.path)
+            origens_do_excel = df_orig.iloc[:, 0].tolist()
+        except:
+            pass
+
+    if request.method == 'POST':
+        amount = float(request.POST.get('amount_per_night') or 0)
+        nights = float(request.POST.get('nights') or 0)
+        adults = float(request.POST.get('adults') or 0)
+        
+        # Tradução das datas (DD/MM/YYYY para AAAA-MM-DD)
+        data_pagamento = datetime.strptime(request.POST.get('payment_date'), '%d/%m/%Y').date()
+        data_checkin = datetime.strptime(request.POST.get('check_in'), '%d/%m/%Y').date()
+        data_checkout = datetime.strptime(request.POST.get('check_out'), '%d/%m/%Y').date()
+
+        guest.name = request.POST.get('name')
+        guest.bed_number = request.POST.get('bed_number')
+        guest.payment_date = data_pagamento
+        guest.check_in = data_checkin
+        guest.check_out = data_checkout
+        guest.amount_per_night = amount
+        guest.nights = int(request.POST.get('nights'))
+        guest.adults = int(request.POST.get('adults'))
+        guest.total = amount * nights * adults
+        guest.payment_method = request.POST.get('payment_method')
+        guest.save()
+        return redirect('listar_family')
+        
+    # NOVO: Envia a lista de origens para o HTML
+    return render(request, 'editar_guest.html', {
+        'guest': guest, 
+        'origens_do_excel': origens_do_excel
     })

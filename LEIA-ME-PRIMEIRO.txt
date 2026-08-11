@@ -55,11 +55,9 @@ tem jeito de melhorar para nao ter que descer tanto a tela?
 
 
 
-reception
-Madalena10
+'username': 'admin', 'password': 'Flordodia10', 'tipo': 'admin', 'staff': True, 'superuser': True},
+            {'username': 'reception', 'password': 'Madalena10', 'tipo': 'extras'},
+            {'username': 'natalia', 'password': 'Render2024*', 'tipo': 'admin',
 
-natalia
-App2024*
 
-adrien
-Flordodia10
+Em vez de apertar o F5 normal, aperte Ctrl + Shift + R (Hard Refresh). I

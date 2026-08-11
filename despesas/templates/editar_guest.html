@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Hóspede</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #6f42c1; }
+        div { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-salvar { width: 100%; padding: 12px; background-color: #ffc107; color: black; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .btn-voltar { display: block; text-align: center; text-decoration: none; color: #666; margin-top: 15px; }
+        .config-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .total-box { background: #d4edda; padding: 10px; font-weight: bold; color: green; font-size: 18px; text-align: right; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="{% url 'listar_family' %}" class="btn-voltar">← Back to the list</a>
+    <h1>✏️ Editar Hóspede</h1>
+
+    <!-- O ACTION APONTA PARA A ROTA DE EDIÇÃO E LEVA O ID DO HÓSPDE -->
+    <form method="POST" action="{% url 'editar_family' guest.id %}">
+        {% csrf_token %}
+        <div><label>Name:</label> <input type="text" name="name" value="{{ guest.name }}" required></div>
+        
+        <div><label>Bed Number (1 a 24):</label> <input type="number" name="bed_number" value="{{ guest.bed_number }}" min="1" max="24" required></div>
+        
+        <!-- A MÁGICA: O filtro |date:"d/m/Y" converte a data do banco para o formato brasileiro -->
+        <div><label>Payment Date (dd/mm/aaaa):</label>
+            <input type="text" name="payment_date" value="{{ guest.payment_date|date:'d/m/Y' }}" placeholder="01/08/2026" pattern="^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$" title="Formato: dd/mm/aaaa" required>
+        </div>
+            
+
+
+       <div class="grid-3">
+    <div>
+        <label for="id_check_in">Check in:</label>
+        <!-- Escuta tanto oninput quanto onchange -->
+        <input type="text" id="id_check_in" name="check_in" 
+               value="{{ guest.check_in|date:'d/m/Y' }}" 
+               placeholder="01/08/2026" 
+               pattern="^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$" 
+               title="dd/mm/aaaa" required 
+               oninput="calcularNoites()" onchange="calcularNoites()">
+    </div>
+    <div>
+        <label for="id_check_out">Check out:</label>
+        <input type="text" id="id_check_out" name="check_out" 
+               value="{{ guest.check_out|date:'d/m/Y' }}" 
+               placeholder="05/08/2026" 
+               pattern="^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$" 
+               title="dd/mm/aaaa" required 
+               oninput="calcularNoites()" onchange="calcularNoites()">
+    </div>
+    <div>
+        <label for="id_adults">Adults (1 a 24):</label>
+        <input type="number" id="id_adults" name="adults" 
+               value="{{ guest.adults }}" min="1" max="24" required oninput="calcularTotal()">
+    </div>
+</div>
+
+        <div class="grid-3">
+            <div>
+                <label for="id_amount">Amount per Night ($):</label>
+                <!-- stringformat:'.2f' garante o ponto decimal exigido pelo input number -->
+                <input type="number" id="id_amount" step="0.01" name="amount_per_night" 
+                    value="{{ guest.amount_per_night|stringformat:'.2f' }}" required oninput="calcularTotal()">
+            </div>
+            <div>
+                <label for="id_nights">Nights (1 a 30):</label>
+                <input type="number" id="id_nights" name="nights" 
+                    value="{{ guest.nights }}" min="1" max="30" required oninput="calcularTotal()">
+            </div>
+            <div class="total-box">
+                Total:<br> $ <span id="id_total">0.00</span>
+            </div>
+        </div>
+
+<div>
+    <label for="id_origin">Payment Method:</label>
+    <select id="id_origin" name="payment_method" required>
+        <option value="" disabled selected>Selecione...</option>
+        {% for origem in origens_do_excel %}
+            <option value="{{ origem }}" {% if guest.payment_method == origem %}selected{% endif %}>
+                {{ origem }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+        <button type="submit" class="btn-salvar">Salvar Alterações</button>
+    </form>
+</div>
+
+<!-- SEM ERROS DE FORMATAÇÃO AQUI! -->
+        <script>
+            // Função ultra robusta para converter "DD/MM/YYYY" em objeto Date
+            function parseDataBR(dataStr) {
+                if (!dataStr) return null;
+                const partes = dataStr.trim().split('/');
+                if (partes.length !== 3) return null;
+
+                const dia = parseInt(partes[0], 10);
+                const mes = parseInt(partes[1], 10) - 1; // Meses no JS vão de 0 a 11
+                const ano = parseInt(partes[2], 10);
+
+                if (isNaN(dia) || isNaN(mes) || isNaN(ano)) return null;
+
+                const data = new Date(ano, mes, dia);
+                // Garante que a data é válida (evita ex: 31/02/2026)
+                if (data.getFullYear() === ano && data.getMonth() === mes && data.getDate() === dia) {
+                    return data;
+                }
+                return null;
+            }
+
+            // Recalcula o número de noites
+            function calcularNoites() {
+                const checkInVal = document.querySelector('input[name="check_in"]')?.value;
+                const checkOutVal = document.querySelector('input[name="check_out"]')?.value;
+
+                const dataIn = parseDataBR(checkInVal);
+                const dataOut = parseDataBR(checkOutVal);
+
+                if (dataIn && dataOut && dataOut > dataIn) {
+                    const diferencaMs = dataOut.getTime() - dataIn.getTime();
+                    const totalNoites = Math.round(diferencaMs / (1000 * 60 * 60 * 24));
+
+                    const campoNights = document.querySelector('input[name="nights"]');
+                    if (campoNights) {
+                        campoNights.value = totalNoites;
+                    }
+                    calcularTotal();
+                }
+            }
+
+            // Recalcula o total monetário
+            function calcularTotal() {
+                const amountEl = document.querySelector('input[name="amount_per_night"]');
+                const nightsEl = document.querySelector('input[name="nights"]');
+                const adultsEl = document.querySelector('input[name="adults"]');
+
+                // Tratamento para aceitar tanto ponto quanto vírgula
+                let amount = parseFloat(amountEl ? amountEl.value.replace(',', '.') : 0) || 0;
+                let nights = parseFloat(nightsEl ? nightsEl.value : 0) || 0;
+                let adults = parseFloat(adultsEl ? adultsEl.value : 0) || 0;
+
+                let total = amount * nights * adults;
+                
+                const totalSpan = document.getElementById('id_total');
+                if (totalSpan) {
+                    totalSpan.textContent = total.toFixed(2);
+                }
+            }
+
+            // Executa imediatamente ao carregar o script
+            calcularNoites();
+            calcularTotal();
+
+            // Garante a execução também após a renderização completa do DOM
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    calcularNoites();
+                    calcularTotal();
+                });
+            }
+        </script>
+</body>
+</html>

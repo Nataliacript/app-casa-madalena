@@ -73,3 +73,33 @@ class Perfil(models.Model):
 #def criar_perfil_usuario(sender, instance, created, **kwargs):
 #    if created:
 #        Perfil.objects.create(usuario=instance)
+
+
+class MoneyBoxExpense(models.Model):
+    # Cópia exata da Despesa para podermos usar a mesma lógica no HTML
+    data = models.DateField()
+    origem = models.CharField(max_length=100)
+    categoria = models.CharField(max_length=100)
+    subcategoria = models.CharField(max_length=100)
+    numero = models.CharField(max_length=50, blank=True, null=True)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    info = models.TextField(blank=True, null=True)
+    descricao = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.categoria} - {self.valor}"
+
+class FamilyFriend(models.Model):
+    name = models.CharField(max_length=200)
+    bed_number = models.IntegerField()
+    payment_date = models.DateField()
+    check_in = models.DateField()
+    check_out = models.DateField()
+    amount_per_night = models.DecimalField(max_digits=10, decimal_places=2)
+    nights = models.IntegerField()
+    adults = models.IntegerField()
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} - Quarto {self.bed_number}"
