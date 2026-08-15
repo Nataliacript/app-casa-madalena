@@ -86,6 +86,9 @@ DATABASES = {
     )
 }
 
+# Força a conexão segura (SSL) no Postgres do Render
+DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
