@@ -436,8 +436,6 @@ def listar_family(request):
     return render(request, 'lista_family.html', {'familia': familia})
 
 
-
-
 @login_required(login_url='/login/')
 def criar_family(request):
     origens_json = "[]"
