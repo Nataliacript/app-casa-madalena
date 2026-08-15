@@ -93,7 +93,7 @@
         <table id="minhaTabela" class="display" style="width:100%">
             <thead>
                 <tr>
-                    <!-- SÃO EXATAMENTE 7 COLUNAS AQUI -->
+                    <!-- SÃO EXATAMENTE 8 COLUNAS AQUI -->
                     <th>Date</th>
                     <th>Product</th>
                     <th>Amount</th>
@@ -113,13 +113,14 @@
                         style="color: green; font-size: 18px; font-weight: bold; white-space: nowrap; min-width: 130px;">
                     </th>
                     <th></th>
+                    <th></th>
                 </tr>
             </tfoot>
 
             <tbody>
                 {% for item in extras %}
                 <tr>
-                    <!-- SÃO EXATAMENTE 7 COLUNAS AQUI TAMBÉM -->
+                    <!-- SÃO EXATAMENTE 8 COLUNAS AQUI TAMBÉM -->
                     <td>{{ item.data|date:"d/m/Y" }}</td>
                     <td>{{ item.product }}</td>
                     <td>{{ item.amount }}</td>
@@ -138,7 +139,7 @@
                 {% empty %}
                 <!-- SE ESTIVER VAZIO, ELE COLOCA UMA SÓ CÉLULA QUEBRANDO AS 7 COLUNAS -->
                 <tr>
-                    <td colspan="7" style="text-align:center; padding: 20px;">Nenhum extra cadastrado.</td>
+                    <td colspan="8" style="text-align:center; padding: 20px;">Nenhum extra cadastrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>

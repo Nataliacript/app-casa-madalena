@@ -86,8 +86,7 @@ DATABASES = {
     )
 }
 
-# Força a conexão segura (SSL) no Postgres do Render
-DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
 
 
 # Password validation
