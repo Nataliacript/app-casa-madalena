@@ -106,9 +106,6 @@ def deslogar(request):
     logout(request)
     return redirect('tela_login') 
 
-@login_required(login_url='/login/')
-def tela_exportar(request):
-    return render(request, 'exportar_excel.html')
 
 @login_required(login_url='/login/')
 def exportar_excel(request):
@@ -524,3 +521,43 @@ def editar_family(request, id):
         'guest': guest, 
         'origens_do_excel': origens_do_excel
     })
+
+
+
+@login_required(login_url='/login/')
+def exportar_extra_form(request):
+    # 1. Puxa todos os dados do banco
+    dados = Extra.objects.all().values('data', 'product', 'amount', 'unitary_value', 'total', 'origin', 'description')
+    
+    # 2. Transforma em uma tabela do Pandas
+    df = pd.DataFrame(dados)
+    
+    # 3. Prepara a resposta do navegador como um arquivo de download
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="extras.xlsx"'
+    
+    # 4. Salva o Pandas dentro do arquivo do navegador
+    df.to_excel(response, index=False, engine='openpyxl')
+    
+    # 5. Entrega o arquivo
+    return response
+
+
+
+@login_required(login_url='/login/')
+def exportar_family_form(request):
+    # 1. Puxa todos os dados do banco
+    dados = FamilyFriend.objects.all().values('name', 'bed_number', 'payment_date', 'check_in', 'check_out', 'amount_per_night', 'nights', 'adults', 'total', 'payment_method')
+    
+    # 2. Transforma em uma tabela do Pandas
+    df = pd.DataFrame(dados)
+    
+    # 3. Prepara a resposta do navegador como um arquivo de download
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="family.xlsx"'
+    
+    # 4. Salva o Pandas dentro do arquivo do navegador
+    df.to_excel(response, index=False, engine='openpyxl')
+    
+    # 5. Entrega o arquivo
+    return response

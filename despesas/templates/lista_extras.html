@@ -81,6 +81,7 @@
 
                 {% if user.perfil.tipo == 'admin' %}
                 <a href="{% url 'home' %}" class="btn-novo" style="background-color: #6c757d;">← Back to the Menu</a>
+                <a href="{% url 'exportar_extra_form' %}" class="btn-excel">   📊 Exportar Extras para Excel </a>
                 {% endif %}
             </div>
             <div>
