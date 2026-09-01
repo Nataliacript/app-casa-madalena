@@ -1,4 +1,4 @@
-=== INSTRUÇÕES PARA CONTINUAR O PROJETO ===
+=== INSTRUÇÕES DO PROJETO ===
 
 1. Abra esta pasta no VS Code.
 2. Abra o terminal (Ctrl + `).
@@ -9,15 +9,7 @@
 7. Parar caso fechei errado: fuser -k 8000/tcp
 
 
-O QUE JÁ ESTÁ PRONTO:
-- Criação de despesas (Funcionando)
-- Listagem na tabela (Funcionando)
-- Excluir despesas (Funcionando)
-- Download para Excel (Funcionando)
-
-O QUE PRECISO FAZER AGORA:
-- Fazer o botão de EDITAR funcionar.
-- Colocar o sistema na internet (Deploy).
+Posso testar banco de dados pgAdmin4
 
 
 CHAT GLM-4.7
@@ -36,6 +28,11 @@ https://dashboard.render.com/web/srv-d9q9o8u417fc73frdkvg/logs?t=app&r=live
 Github
 nataliacript@gmail.com
 GitHub2024*
+
+Render
+nataliacript@gmail.com
+senha: Render2024*
+
 
 e-mail
 nataliacript@gmail.com
