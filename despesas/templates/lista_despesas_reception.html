@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Chefinho's Expenses</title>
+    <title>Reception's Expenses</title>
 
     <!-- CSS do DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
@@ -101,9 +101,9 @@
         <!-- Botões de Ação -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
             <div>
-                <a href="{% url 'criar_despesa' %}" class="btn-novo">+ New Expense</a>
-                <a href="{% url 'exportar_excel' %}" class="btn-excel">📥 Download Excel file</a>
-                <a href="{% url 'resultado_page' %}" class="btn-novo" style="background-color: #fd7e14;">📊 Results</a>
+                <a href="{% url 'novo_money_box' %}" class="btn-novo">+ New Expense</a>
+                <a href="{% url 'exportar_excel_money_box' %}" class="btn-excel">📥 Download Excel file</a>
+                
                 <a href="{% url 'listar_extras' %}" class="btn-novo" style="background-color: #17a2b8;">Reception</a>
             </div>
 
@@ -140,37 +140,37 @@
             </tfoot>
 
             <tbody>
-                {% for despesa in despesas %}
-                    {% if despesa.itens.all %}
-                        {% for subitem in despesa.itens.all %}
+                {% for MoneyBoxExpense in MoneyBoxExpenses %}
+                    {% if MoneyBoxExpense.itens.all %}
+                        {% for subitem in MoneyBoxExpense.itens.all %}
                         <tr>
-                            <td>{{ despesa.data|date:"d/m/Y" }}</td>
-                            <td>{{ despesa.origem }}</td>
+                            <td>{{ MoneyBoxExpense.data|date:"d/m/Y" }}</td>
+                            <td>{{ MoneyBoxExpense.origem }}</td>
                             <td>{{ subitem.categoria }}</td>
                             <td>{{ subitem.subcategoria }}</td>
-                            <td>{{ despesa.numero }}</td>
+                            <td>{{ MoneyBoxExpense.numero }}</td>
                             <td>$ {{ subitem.subtotal|default:subitem.valor_unitario }}</td>
-                            <td>{{ despesa.info }}</td>
-                            <td>{{ despesa.descricao }}</td>
+                            <td>{{ MoneyBoxExpense.info }}</td>
+                            <td>{{ MoneyBoxExpense.descricao }}</td>
                             <td>
-                                <a href="{% url 'editar_despesa' despesa.id %}" class="btn btn-edit">Edit</a>
-                                <a href="{% url 'excluir_despesa' despesa.id %}" class="btn btn-delete" onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
+                                <a href="{% url 'editar_despesa_money_box' MoneyBoxExpense.id %}" class="btn btn-edit">Edit</a>
+                                <a href="{% url 'excluir_despesa_money_box' MoneyBoxExpense.id %}" class="btn btn-delete" onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td>{{ despesa.data|date:"d/m/Y" }}</td>
-                            <td>{{ despesa.origem }}</td>
-                            <td>{{ despesa.categoria }}</td>
-                            <td>{{ despesa.subcategoria }}</td>
-                            <td>{{ despesa.numero }}</td>
-                            <td>$ {{ despesa.valor }}</td>
-                            <td>{{ despesa.info }}</td>
-                            <td>{{ despesa.descricao }}</td>
+                            <td>{{ MoneyBoxExpense.data|date:"d/m/Y" }}</td>
+                            <td>{{ MoneyBoxExpense.origem }}</td>
+                            <td>{{ MoneyBoxExpense.categoria }}</td>
+                            <td>{{ MoneyBoxExpense.subcategoria }}</td>
+                            <td>{{ MoneyBoxExpense.numero }}</td>
+                            <td>$ {{ MoneyBoxExpense.valor }}</td>
+                            <td>{{ MoneyBoxExpense.info }}</td>
+                            <td>{{ MoneyBoxExpense.descricao }}</td>
                             <td>
-                                <a href="{% url 'editar_despesa' despesa.id %}" class="btn btn-edit">Edit</a>
-                                <a href="{% url 'excluir_despesa' despesa.id %}" class="btn btn-delete" onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
+                                <a href="{% url 'editar_despesa_money_box' MoneyBoxExpense.id %}" class="btn btn-edit">Edit</a>
+                                <a href="{% url 'excluir_despesa_money_box' MoneyBoxExpense.id %}" class="btn btn-delete" onclick="return confirm('Tem certeza que deseja excluir este item?')">Delet</a>
                             </td>
                         </tr>
                     {% endif %}

@@ -8,9 +8,11 @@ from django.db.models import Sum
 import openpyxl
 from openpyxl.utils import get_column_letter
 from datetime import datetime, date
-from .models import Despesa, ArquivoResultado, Extra, ConfigProduto, ConfigOrigem, MoneyBoxExpense, FamilyFriend 
-
-
+from .models import Despesa, ItemDespesa, MoneyBoxExpense, ItemMoneyBoxExpense, ArquivoResultado, Extra, ConfigProduto, ConfigOrigem, MoneyBoxExpense, FamilyFriend 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.db import transaction
 
 
 @login_required(login_url='/login/')
@@ -19,7 +21,8 @@ def listar_despesas(request):
     if request.user.username not in ['admin', 'natalia']:
         return redirect('listar_extras')
         
-    despesas = Despesa.objects.all().order_by('-data') 
+    # O prefetch_related carrega os itens vinculados em uma única consulta, otimizando a listagem
+    despesas = Despesa.objects.all().prefetch_related('itens').order_by('-data')
     total_geral = despesas.aggregate(total=Sum('valor'))['total'] or 0
     return render(request, 'lista_despesas.html', {'despesas': despesas, 'total_geral': total_geral})
 
@@ -28,62 +31,170 @@ def listar_despesas(request):
 def criar_despesa(request):
     if request.method == 'POST':
         data = request.POST.get('data')
-        valor = request.POST.get('valor')
         origem = request.POST.get('origem')
-        categoria = request.POST.get('categoria')
-        subcategoria = request.POST.get('subcategoria')
         numero = request.POST.get('numero')
         info = request.POST.get('info')
         descricao = request.POST.get('descricao')
-        
-        Despesa.objects.create(
-            data=data, valor=valor, origem=origem, categoria=categoria,
-            subcategoria=subcategoria, numero=numero, info=info, descricao=descricao
-        )
-        # Pega o valor do botão que foi clicado
+        supplier = request.POST.get('supplier')  # Novo campo
+
+        # Listas de dados capturadas do formulário dinâmico
+        categorias = request.POST.getlist('categoria[]')
+        subcategorias = request.POST.getlist('subcategoria[]')
+        quantidades = request.POST.getlist('quantidade[]')
+        valores_unitarios = request.POST.getlist('valor_unitario[]')
+
+        # Transação atômica: se houver falha na gravação de algum item, nada é salvo no banco
+        with transaction.atomic():
+            # Cria a despesa principal zerada primeiro para vincular os itens
+            despesa = Despesa.objects.create(
+                data=data,
+                origem=origem,
+                numero=numero,
+                info=info,
+                descricao=descricao,
+                supplier=supplier,
+                valor=0
+            )
+
+            total_despesa = 0
+            
+            # Loop para registrar cada subitem vindo do formulário
+            for i in range(len(categorias)):
+                cat = categorias[i]
+                subcat = subcategorias[i]
+                qtd = float(quantidades[i]) if quantidades[i] else 1.0
+                v_unit = float(valores_unitarios[i]) if valores_unitarios[i] else 0.0
+                
+                subtotal = qtd * v_unit
+                total_despesa += subtotal
+
+                ItemDespesa.objects.create(
+                    despesa=despesa,
+                    categoria=cat,
+                    subcategoria=subcat,
+                    quantidade=qtd,
+                    valor_unitario=v_unit,
+                    subtotal=subtotal
+                )
+
+            # Atualiza o valor total consolidado na despesa pai
+            despesa.valor = total_despesa
+            # Define categoria/subcategoria do cabeçalho com base no primeiro item para compatibilidade
+            if categorias:
+                despesa.categoria = categorias[0]
+                despesa.subcategoria = subcategorias[0]
+            despesa.save()
+
         acao = request.POST.get('acao')
-        
         if acao == 'salvar_novo':
-            # Se clicou no azul, recarrega a própria página de novo lançamento
             return redirect('criar_despesa')
         else:
-            # Se clicou no verde (ou apertou Enter), volta para a página inicial
             return redirect('home')
-    
-   
     
     return render(request, 'novo_lancamento.html')
 
+
 @login_required(login_url='/login/')
 def excluir_despesa(request, id):
-    despesa = Despesa.objects.get(id=id)
+    despesa = get_object_or_404(Despesa, id=id)
     despesa.delete()
     return redirect('home')
 
+
 @login_required(login_url='/login/')
 def editar_despesa(request, id):
-    # 1. Vai no banco de dados e busca a despesa exata com aquele ID
-    despesa = Despesa.objects.get(id=id)
-    
-    # 2. Se o usuário acabou de clicar no botão "Salvar Alterações" (POST)
+    despesa = get_object_or_404(Despesa, id=id)
+
     if request.method == 'POST':
-        despesa.data = request.POST.get('data')
-        despesa.valor = request.POST.get('valor')
-        despesa.origem = request.POST.get('origem')
-        despesa.categoria = request.POST.get('categoria')
-        despesa.subcategoria = request.POST.get('subcategoria')
-        despesa.numero = request.POST.get('numero')
-        despesa.info = request.POST.get('info')
-        despesa.descricao = request.POST.get('descricao')
-        
-        # Salva as alterações no banco de dados (UPDATE)
-        despesa.save()
-        
-        # Volta para a lista
+        data = request.POST.get('data')
+        origem = request.POST.get('origem')
+        numero = request.POST.get('numero')
+        info = request.POST.get('info')
+        descricao = request.POST.get('descricao')
+        supplier = request.POST.get('supplier')
+
+        categorias = request.POST.getlist('categoria[]')
+        subcategorias = request.POST.getlist('subcategoria[]')
+        quantidades = request.POST.getlist('quantidade[]')
+        valores_unitarios = request.POST.getlist('valor_unitario[]')
+
+        with transaction.atomic():
+            despesa.data = data
+            despesa.origem = origem
+            despesa.numero = numero
+            despesa.info = info
+            despesa.descricao = descricao
+            despesa.supplier = supplier
+
+            # Deleta os subitens antigos para recriar os atualizados
+            despesa.itens.all().delete()
+
+            total_despesa = 0
+
+            for i in range(len(categorias)):
+                cat = categorias[i]
+                subcat = subcategorias[i]
+                qtd = float(quantidades[i]) if quantidades[i] else 1.0
+                v_unit = (
+                    float(valores_unitarios[i]) if valores_unitarios[i] else 0.0
+                )
+
+                subtotal = qtd * v_unit
+                total_despesa += subtotal
+
+                ItemDespesa.objects.create(
+                    despesa=despesa,
+                    categoria=cat,
+                    subcategoria=subcat,
+                    quantidade=qtd,
+                    valor_unitario=v_unit,
+                    subtotal=subtotal,
+                )
+
+            despesa.valor = total_despesa
+            if categorias:
+                despesa.categoria = categorias[0]
+                despesa.subcategoria = subcategorias[0]
+            despesa.save()
+
         return redirect('home')
-    
-    # 3. Se for apenas entrar na página (GET), manda o HTML com os dados dessa despesa
-    return render(request, 'editar_lancamento.html', {'despesa': despesa})
+
+    # --- REQUISIÇÃO GET (Carregamento da página) ---
+    itens_queryset = despesa.itens.all()
+    itens_lista = []
+
+    if itens_queryset.exists():
+        for item in itens_queryset:
+            itens_lista.append(
+                {
+                    'categoria': item.categoria or '',
+                    'subcategoria': item.subcategoria or '',
+                    'quantidade': float(item.quantidade or 1),
+                    'valor_unitario': float(item.valor_unitario or 0.0),
+                }
+            )
+    else:
+        # Se for um registro antigo do banco sem subitens
+        itens_lista.append(
+            {
+                'categoria': despesa.categoria or '',
+                'subcategoria': despesa.subcategoria or '',
+                'quantidade': 1.0,
+                'valor_unitario': float(despesa.valor or 0.0),
+            }
+        )
+
+    # Converte explicitamente a lista serializada em string JSON
+    itens_json_str = json.dumps(itens_lista)
+
+    return render(
+        request,
+        'editar_lancamento.html',
+        {
+            'despesa': despesa,
+            'itens_json': itens_json_str,
+        },
+    )
 
 
 def tela_login(request):
@@ -106,23 +217,99 @@ def deslogar(request):
     logout(request)
     return redirect('tela_login') 
 
-
 @login_required(login_url='/login/')
 def exportar_excel(request):
-    # 1. Puxa todos os dados do banco
-    dados = Despesa.objects.all().values('data', 'origem', 'categoria', 'subcategoria', 'numero', 'valor', 'info', 'descricao')
-    
-    # 2. Transforma em uma tabela do Pandas
-    df = pd.DataFrame(dados)
-    
-    # 3. Prepara a resposta do navegador como um arquivo de download
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="minhas_despesas.xlsx"'
-    
-    # 4. Salva o Pandas dentro do arquivo do navegador
-    df.to_excel(response, index=False, engine='openpyxl')
-    
-    # 5. Entrega o arquivo
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Despesas Detalhadas"
+
+    # Cabeçalho do arquivo Excel
+    ws.append(
+        [
+            "ID Despesa",
+            "Data",
+            "Origem",
+            "Fornecedor",
+            "Nº Nota",
+            "Mês/Ano Ref",
+            "Categoria",
+            "Subcategoria",
+            "Qtd",
+            "Valor Unitário",
+            "Subtotal Item",
+            "Descrição/Obs",
+        ]
+    )
+
+    # Busca todas as despesas trazendo os itens pré-carregados da tabela relacionada
+    despesas = (
+        Despesa.objects.all().prefetch_related("itens").order_by("-data")
+    )
+
+    for despesa in despesas:
+        # Acessa a lista de objetos do relacionamento 'itens'
+        itens_relacionados = despesa.itens.all()
+
+        if itens_relacionados.exists():
+            for item in itens_relacionados:
+                # Conversão de tipos para evitar erros entre float e Decimal
+                qtd = float(item.quantidade or 0)
+                valor_unitario = float(item.valor_unitario or 0)
+
+                # Se o objeto item tiver o campo 'subtotal', usa ele; caso contrário calcula
+                if hasattr(item, "subtotal") and item.subtotal is not None:
+                    subtotal = float(item.subtotal)
+                else:
+                    subtotal = qtd * valor_unitario
+
+                ws.append(
+                    [
+                        despesa.id,
+                        (
+                            despesa.data.strftime("%d/%m/%Y")
+                            if despesa.data
+                            else ""
+                        ),
+                        despesa.origem or "",
+                        despesa.supplier or "",
+                        despesa.numero or "",
+                        despesa.info or "",
+                        getattr(item, "categoria", ""),
+                        getattr(item, "subcategoria", ""),
+                        qtd,
+                        valor_unitario,
+                        subtotal,
+                        despesa.descricao or "",
+                    ]
+                )
+        else:
+            # Caso a despesa não possua subitens cadastrados
+            valor_total = float(getattr(despesa, "valor_total_geral", 0) or 0)
+            ws.append(
+                [
+                    despesa.id,
+                    despesa.data.strftime("%d/%m/%Y") if despesa.data else "",
+                    despesa.origem or "",
+                    despesa.supplier or "",
+                    despesa.numero or "",
+                    despesa.info or "",
+                    "-",
+                    "-",
+                    1,
+                    valor_total,
+                    valor_total,
+                    despesa.descricao or "",
+                ]
+            )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="relatorio_despesas_detalhado.xlsx"'
+    )
+    wb.save(response)
+
     return response
 
 @login_required(login_url='/login/')
@@ -421,10 +608,282 @@ def editar_extra(request, id):
 
 @login_required(login_url='/login/')
 def listar_money_box(request):
-    # PORTIEIRO DO MONEY BOX: Todos acessam a tela de listagem (mostra tudo que está no banco de dados). 
-    # Se for um usuário comum de Extras tentar acessar a listagem, não o impeça, pois os dados do Money Box são de conhecimento de todos.
-    gastos = MoneyBoxExpense.objects.all().order_by('-data')
-    return render(request, 'lista_money_box.html', {'gastos': gastos})
+          
+    # O prefetch_related carrega os itens vinculados em uma única consulta, otimizando a listagem
+    despesas = MoneyBoxExpense.objects.all().prefetch_related('itens').order_by('-data')
+    total_geral = despesas.aggregate(total=Sum('valor'))['total'] or 0
+    return render(request, 'lista_despesas_reception.html', {'MoneyBoxExpenses': despesas, 'total_geral': total_geral})
+
+
+
+@login_required(login_url='/login/')
+def criar_despesa_money_box(request):
+    if request.method == 'POST':
+        data = request.POST.get('data')
+        origem = request.POST.get('origem')
+        numero = request.POST.get('numero')
+        info = request.POST.get('info')
+        descricao = request.POST.get('descricao')
+        supplier = request.POST.get('supplier')  # Novo campo
+
+        # Listas de dados capturadas do formulário dinâmico
+        categorias = request.POST.getlist('categoria[]')
+        subcategorias = request.POST.getlist('subcategoria[]')
+        quantidades = request.POST.getlist('quantidade[]')
+        valores_unitarios = request.POST.getlist('valor_unitario[]')
+
+        # Transação atômica: se houver falha na gravação de algum item, nada é salvo no banco
+        with transaction.atomic():
+            # Cria a despesa principal zerada primeiro para vincular os itens
+            despesa = MoneyBoxExpense.objects.create(
+                data=data,
+                origem=origem,
+                numero=numero,
+                info=info,
+                descricao=descricao,
+                supplier=supplier,
+                valor=0
+            )
+
+            total_despesa = 0
+            
+            # Loop para registrar cada subitem vindo do formulário
+            for i in range(len(categorias)):
+                cat = categorias[i]
+                subcat = subcategorias[i]
+                qtd = float(quantidades[i]) if quantidades[i] else 1.0
+                v_unit = float(valores_unitarios[i]) if valores_unitarios[i] else 0.0
+                
+                subtotal = qtd * v_unit
+                total_despesa += subtotal
+
+                ItemMoneyBoxExpense.objects.create(
+                    despesa=despesa,
+                    categoria=cat,
+                    subcategoria=subcat,
+                    quantidade=qtd,
+                    valor_unitario=v_unit,
+                    subtotal=subtotal
+                )
+
+            # Atualiza o valor total consolidado na despesa pai
+            despesa.valor = total_despesa
+            # Define categoria/subcategoria do cabeçalho com base no primeiro item para compatibilidade
+            if categorias:
+                despesa.categoria = categorias[0]
+                despesa.subcategoria = subcategorias[0]
+            despesa.save()
+
+        acao = request.POST.get('acao')
+        if acao == 'salvar_novo':
+            return redirect('novo_money_box')
+        else:
+            return redirect('listar_money_box')
+    
+    return render(request, 'novo_lancamento_reception.html')
+
+
+@login_required(login_url='/login/')
+def excluir_despesa_money_box(request, id):
+    despesa = get_object_or_404(MoneyBoxExpense, id=id)
+    despesa.delete()
+    return redirect('listar_money_box')
+
+
+@login_required(login_url='/login/')
+def editar_despesa_money_box(request, id):
+    despesa = get_object_or_404(MoneyBoxExpense, id=id)
+
+    if request.method == 'POST':
+        data = request.POST.get('data')
+        origem = request.POST.get('origem')
+        numero = request.POST.get('numero')
+        info = request.POST.get('info')
+        descricao = request.POST.get('descricao')
+        supplier = request.POST.get('supplier')
+
+        categorias = request.POST.getlist('categoria[]')
+        subcategorias = request.POST.getlist('subcategoria[]')
+        quantidades = request.POST.getlist('quantidade[]')
+        valores_unitarios = request.POST.getlist('valor_unitario[]')
+
+        with transaction.atomic():
+            despesa.data = data
+            despesa.origem = origem
+            despesa.numero = numero
+            despesa.info = info
+            despesa.descricao = descricao
+            despesa.supplier = supplier
+
+            # Deleta os subitens antigos para recriar os atualizados
+            despesa.itens.all().delete()
+
+            total_despesa = 0
+
+            for i in range(len(categorias)):
+                cat = categorias[i]
+                subcat = subcategorias[i]
+                qtd = float(quantidades[i]) if quantidades[i] else 1.0
+                v_unit = (
+                    float(valores_unitarios[i]) if valores_unitarios[i] else 0.0
+                )
+
+                subtotal = qtd * v_unit
+                total_despesa += subtotal
+
+                ItemMoneyBoxExpense.objects.create(
+                    despesa=despesa,
+                    categoria=cat,
+                    subcategoria=subcat,
+                    quantidade=qtd,
+                    valor_unitario=v_unit,
+                    subtotal=subtotal,
+                )
+
+            despesa.valor = total_despesa
+            if categorias:
+                despesa.categoria = categorias[0]
+                despesa.subcategoria = subcategorias[0]
+            despesa.save()
+
+        return redirect('listar_money_box')
+
+    # --- REQUISIÇÃO GET (Carregamento da página) ---
+    itens_queryset = despesa.itens.all()
+    itens_lista = []
+
+    if itens_queryset.exists():
+        for item in itens_queryset:
+            itens_lista.append(
+                {
+                    'categoria': item.categoria or '',
+                    'subcategoria': item.subcategoria or '',
+                    'quantidade': float(item.quantidade or 1),
+                    'valor_unitario': float(item.valor_unitario or 0.0),
+                }
+            )
+    else:
+        # Se for um registro antigo do banco sem subitens
+        itens_lista.append(
+            {
+                'categoria': despesa.categoria or '',
+                'subcategoria': despesa.subcategoria or '',
+                'quantidade': 1.0,
+                'valor_unitario': float(despesa.valor or 0.0),
+            }
+        )
+
+    # Converte explicitamente a lista serializada em string JSON
+    itens_json_str = json.dumps(itens_lista)
+
+    return render(
+        request,
+        'editar_lancamento_reception.html',
+        {
+            'despesa': despesa,
+            'itens_json': itens_json_str,
+        },
+    )
+
+@login_required(login_url='/login/')
+def exportar_excel_money_box(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Money Box Detalhado"
+
+    # Cabeçalho do arquivo Excel
+    ws.append(
+        [
+            "ID Despesa",
+            "Data",
+            "Origem",
+            "Fornecedor",
+            "Nº Nota",
+            "Mês/Ano Ref",
+            "Categoria",
+            "Subcategoria",
+            "Qtd",
+            "Valor Unitário",
+            "Subtotal Item",
+            "Descrição/Obs",
+        ]
+    )
+
+    # 1. Troca do Model Despesa por MoneyBoxExpense
+    despesas = (
+        MoneyBoxExpense.objects.all().prefetch_related("itens").order_by("-data")
+    )
+
+    for despesa in despesas:
+        # Acessa os subitens da tabela ItemMoneyBoxExpense
+        itens_relacionados = despesa.itens.all()
+
+        if itens_relacionados.exists():
+            for item in itens_relacionados:
+                # Conversão de tipos para evitar erros entre float e Decimal
+                qtd = float(item.quantidade or 0)
+                valor_unitario = float(item.valor_unitario or 0)
+
+                # Se o objeto item tiver o campo 'subtotal', usa ele; caso contrário calcula
+                if hasattr(item, "subtotal") and item.subtotal is not None:
+                    subtotal = float(item.subtotal)
+                else:
+                    subtotal = qtd * valor_unitario
+
+                ws.append(
+                    [
+                        despesa.id,
+                        (
+                            despesa.data.strftime("%d/%m/%Y")
+                            if despesa.data
+                            else ""
+                        ),
+                        despesa.origem or "",
+                        despesa.supplier or "",
+                        despesa.numero or "",
+                        despesa.info or "",
+                        getattr(item, "categoria", ""),
+                        getattr(item, "subcategoria", ""),
+                        qtd,
+                        valor_unitario,
+                        subtotal,
+                        despesa.descricao or "",
+                    ]
+                )
+        else:
+            # Caso o registro não possua subitens cadastrados
+            valor_total = float(getattr(despesa, "valor", 0) or 0)
+            ws.append(
+                [
+                    despesa.id,
+                    despesa.data.strftime("%d/%m/%Y") if despesa.data else "",
+                    despesa.origem or "",
+                    despesa.supplier or "",
+                    despesa.numero or "",
+                    despesa.info or "",
+                    "-",
+                    "-",
+                    1,
+                    valor_total,
+                    valor_total,
+                    despesa.descricao or "",
+                ]
+            )
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    # Altera o nome do arquivo gerado
+    response["Content-Disposition"] = (
+        'attachment; filename="relatorio_money_box_detalhado.xlsx"'
+    )
+    wb.save(response)
+
+    return response
+
+
+
+
 
 # NOVA VIEW: Todos acessam o Family & Friends
 @login_required(login_url='/login/')

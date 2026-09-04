@@ -7,15 +7,30 @@ from django.dispatch import receiver
 class Despesa(models.Model):
     data = models.DateField()
     origem = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=100)
-    subcategoria = models.CharField(max_length=100)
+    # Categoria e Subcategoria no modelo principal tornam-se opcionais para retrocompatibilidade
+    categoria = models.CharField(max_length=100, blank=True, null=True)
+    subcategoria = models.CharField(max_length=100, blank=True, null=True)
     numero = models.CharField(max_length=50, blank=False, null=False)
-    valor = models.DecimalField(max_digits=10, decimal_places=2) # Ideal para dinheiro
-    info = models.TextField(blank=False, null=False)
-    descricao = models.TextField(blank=False, null=False)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Valor total consolidado
+    supplier = models.CharField(max_length=200, blank=True, null=True) # Novo campo Fornecedor
+    info = models.TextField(blank=True, null=True)
+    descricao = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.categoria} - {self.valor}"
+        return f"{self.data} - {self.supplier or self.origem} - $ {self.valor}"
+
+
+class ItemDespesa(models.Model):
+    """Modelo relacional para os subitens/linhas da despesa"""
+    despesa = models.ForeignKey(Despesa, on_delete=models.CASCADE, related_name='itens')
+    categoria = models.CharField(max_length=100)
+    subcategoria = models.CharField(max_length=100)
+    quantidade = models.FloatField(default=1.0)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.categoria} / {self.subcategoria} - $ {self.subtotal}"
 
 
 # MODELO PARA GUARDAR OS ARQUIVOS EXCEL
@@ -25,12 +40,11 @@ class ArquivoResultado(models.Model):
     arquivo = models.FileField(upload_to='resultados/') 
     data_upload = models.DateTimeField(auto_now_add=True) 
     
-    # Vai guardar algo como "Resumo, Dados Gerais"
+    # Guarda nomes das abas separados por vírgula ("Resumo, Dados Gerais")
     abas_liberadas = models.TextField(blank=True, null=True, help_text="Nomes das abas separados por vírgula")
 
     def __str__(self):
         return self.nome
-
 
 
 class Extra(models.Model):
@@ -53,8 +67,6 @@ class ConfigOrigem(models.Model):
     arquivo = models.FileField(upload_to='config_extras/')
 
 
-
-
 class Perfil(models.Model):
     OPCOES_DE_PERFIL = (
         ('admin', 'Administrador'),
@@ -68,26 +80,37 @@ class Perfil(models.Model):
     def __str__(self):
         return f"{self.usuario.username} - {self.get_tipo_display()}"
 
-# Sinal automático: Sempre que um User for criado, cria um Perfil pra ele junto
-#@receiver(post_save, sender=User)
-#def criar_perfil_usuario(sender, instance, created, **kwargs):
-#    if created:
-#        Perfil.objects.create(usuario=instance)
-
 
 class MoneyBoxExpense(models.Model):
-    # Cópia exata da Despesa para podermos usar a mesma lógica no HTML
     data = models.DateField()
     origem = models.CharField(max_length=100)
-    categoria = models.CharField(max_length=100)
-    subcategoria = models.CharField(max_length=100)
-    numero = models.CharField(max_length=50, blank=True, null=True)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    # Categoria e Subcategoria no modelo principal tornam-se opcionais para retrocompatibilidade
+    categoria = models.CharField(max_length=100, blank=True, null=True)
+    subcategoria = models.CharField(max_length=100, blank=True, null=True)
+    numero = models.CharField(max_length=50, blank=False, null=False)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Valor total consolidado
+    supplier = models.CharField(max_length=200, blank=True, null=True) # Novo campo Fornecedor
     info = models.TextField(blank=True, null=True)
     descricao = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.categoria} - {self.valor}"
+        return f"{self.data} - {self.supplier or self.origem} - $ {self.valor}"
+
+
+class ItemMoneyBoxExpense(models.Model):
+    """Modelo relacional para os subitens/linhas da despesa"""
+    despesa = models.ForeignKey(MoneyBoxExpense, on_delete=models.CASCADE, related_name='itens')
+    categoria = models.CharField(max_length=100)
+    subcategoria = models.CharField(max_length=100)
+    quantidade = models.FloatField(default=1.0)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.categoria} / {self.subcategoria} - $ {self.subtotal}"
+
+
+
 
 class FamilyFriend(models.Model):
     name = models.CharField(max_length=200)

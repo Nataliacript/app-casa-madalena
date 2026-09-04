@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Lançamento de Despesas</title>
+    <title>Lançamento de Despesas pela Reception</title>
     <style>
         body {
             font-family: sans-serif;
@@ -122,14 +122,14 @@
 <body>
 
     <div class="container">
-        <h1>New Expense Chefinho</h1>
+        <h1>New Expense Reception</h1>
 
         <div style="text-align: right; margin-bottom: 20px;">
             <a href="{% url 'logout' %}"
                 style="color: red; text-decoration: none; font-weight: bold; font-size: 14px;">🔒 Exit System</a>
         </div>
 
-        <form method="POST" action="{% url 'criar_despesa' %}" style="display: grid; gap: 15px;">
+        <form method="POST" action="{% url 'novo_money_box' %}" style="display: grid; gap: 15px;">
 
             {% csrf_token %}
 
@@ -192,7 +192,7 @@
                 <textarea name="descricao" rows="3" placeholder="Detalhes adicionais..." required></textarea>
             </div>
 
-            <a href="{% url 'home' %}"
+            <a href="{% url 'listar_money_box' %}"
                 style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
                 Back to the list</a>
 

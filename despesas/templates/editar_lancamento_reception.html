@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Lançamento de Despesas</title>
+    <title>Editar Lançamento</title>
     <style>
         body {
             font-family: sans-serif;
@@ -122,32 +122,32 @@
 <body>
 
     <div class="container">
-        <h1>New Expense Chefinho</h1>
+        <h1>Edit Expense</h1>
 
         <div style="text-align: right; margin-bottom: 20px;">
             <a href="{% url 'logout' %}"
                 style="color: red; text-decoration: none; font-weight: bold; font-size: 14px;">🔒 Exit System</a>
         </div>
 
-        <form method="POST" action="{% url 'criar_despesa' %}" style="display: grid; gap: 15px;">
+        <form method="POST" action="" style="display: grid; gap: 15px;">
 
             {% csrf_token %}
 
             <div class="grid-2">
                 <div>
                     <label><b>Date:</b></label>
-                    <input type="date" name="data" required>
+                    <input type="date" name="data" value="{{ despesa.data|date:'Y-m-d' }}" required>
                 </div>
 
                 <div>
                     <label><b>Money From:</b></label>
-                    <select name="origem" required>
-                        <option value="" disabled selected>Selecione a origem...</option>
-                        <option value="Money Box">Money Box</option>
-                        <option value="BPI">BPI</option>
-                        <option value="Revolut">Revolut</option>
-                        <option value="Drop">Drop</option>
-                        <option value="Adrien Money">Adrien Money</option>
+                    <select name="origem" id="id_origem" required>
+                        <option value="" disabled>Selecione a origem...</option>
+                        <option value="Money Box" {% if despesa.origem == 'Money Box' %}selected{% endif %}>Money Box</option>
+                        <option value="BPI" {% if despesa.origem == 'BPI' %}selected{% endif %}>BPI</option>
+                        <option value="Revolut" {% if despesa.origem == 'Revolut' %}selected{% endif %}>Revolut</option>
+                        <option value="Drop" {% if despesa.origem == 'Drop' %}selected{% endif %}>Drop</option>
+                        <option value="Adrien Money" {% if despesa.origem == 'Adrien Money' %}selected{% endif %}>Adrien Money</option>
                     </select>
                 </div>
             </div>
@@ -155,18 +155,18 @@
             <div class="grid-2">
                 <div>
                     <label><b>Supplier:</b></label>
-                    <input type="text" name="supplier" placeholder="Nome do fornecedor / empresa" required>
+                    <input type="text" name="supplier" value="{{ despesa.supplier|default:'' }}" placeholder="Nome do fornecedor / empresa" required>
                 </div>
 
                 <div>
                     <label><b>Invoice Number:</b></label>
-                    <input type="text" name="numero" placeholder="Nº da nota ou documento">
+                    <input type="text" name="numero" value="{{ despesa.numero|default:'' }}" placeholder="Nº da nota ou documento" required>
                 </div>
             </div>
 
             <div>
                 <label><b>Reference Month/Year:</b></label>
-                <input type="text" name="info" placeholder="MM/AAAA (Ex: 02/2026)" pattern="^(0[1-9]|1[0-2])\/\d{4}$"
+                <input type="text" name="info" value="{{ despesa.info|default:'' }}" placeholder="MM/AAAA (Ex: 02/2026)" pattern="^(0[1-9]|1[0-2])\/\d{4}$"
                     title="Por favor, use o formato MM/AAAA. Exemplo: 02/2026" required>
             </div>
 
@@ -189,28 +189,37 @@
 
             <div>
                 <label><b>Description / Employee:</b></label>
-                <textarea name="descricao" rows="3" placeholder="Detalhes adicionais..." required></textarea>
+                <textarea name="descricao" rows="3" placeholder="Detalhes adicionais..." required>{{ despesa.descricao|default:'' }}</textarea>
             </div>
 
-            <a href="{% url 'home' %}"
-                style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">←
-                Back to the list</a>
+            <a href="{% url 'listar_money_box' %}"
+                style="display: block; text-align: center; text-decoration: none; color: #666; margin-top: 10px;">← Back to the list</a>
 
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="submit" name="acao" value="salvar_voltar" class="btn-submit"
-                    style="flex: 1; background-color: #28a745;">
-                    Save and Back to list
-                </button>
-
-                <button type="submit" name="acao" value="salvar_novo" class="btn-submit"
-                    style="flex: 1; background-color: #007bff;">
-                    Save and New expense
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn-submit" style="background-color: #28a745;">
+                    Save Changes
                 </button>
             </div>
 
         </form>
 
+        <!-- Serialização limpa do Django para o JS -->
+        {{ itens_json|json_script:"itens-data" }}
+
         <script>
+            // Leitura dos dados passados pela view Python
+            const rawItens = document.getElementById('itens-data').textContent;
+            let itensSalvos = [];
+            try {
+                itensSalvos = JSON.parse(JSON.parse(rawItens));
+            } catch (e) {
+                try {
+                    itensSalvos = JSON.parse(rawItens);
+                } catch (err) {
+                    itensSalvos = [];
+                }
+            }
+
             const subcategoriasPorCategoria = {
                 "Adjust": ["Adjust"],
                 "Annualidad-Fixa": ["Aqua Lab Water Test", "Gas inspection", "INTERPREV-Fiscalisacao", "INTERPREV-Segurancaesaude", "License", "SOPFOGO-Extinctores", "SOPFOGO-Manutencao Central Incendio", "SPA"],
@@ -227,7 +236,7 @@
                 "Despesas Pessoais": ["Adrien", "Invest", "Marketing", "Rent Adri", "Van"],
                 "DinnerNight": ["Food"],
                 "Drop": ["Adrien drop", "Deposit Drop", "From MB to Adrien Money", "From Drop to Adrien Money", "Jar", "From Adrian Money to Drop", "From Bpi to Revolut", "From Paypal to Revolut", "From MB to Drop"],
-                "Hostel furnitures": ["Bathroom", "Bedroom", "Bedroom\"Blankets\"", "Bedroom\"Sheets\"", "Electromenager", "General", "Kitchen", "Plants", "Rooftop", "Staff"],
+                "Hostel furnitures": ["Bathroom", "Bedroom", "Bedroom Blankets", "Bedroom Sheets", "Electromenager", "General", "Kitchen", "Plants", "Rooftop", "Staff"],
                 "Impostos": ["Imi", "Imi10", "Imi8", "INPI", "IRS", "IVA", "Seg.Soc."],
                 "Insurance": ["Aggema", "Auto", "CFE", "Madalena10", "Madalena8", "Res.Civ.Hostel"],
                 "Liquor Bar": ["Amarguinha", "Aperol", "Beirao", "Ginha", "Maciera", "Medronho", "Pastel de Nata", "Port Wine"],
@@ -235,14 +244,14 @@
                 "Mada8": ["Administracao", "Obra"],
                 "Marketing": ["Others-marketing"],
                 "Mensalidade-Fixa": ["ÁguaFAGAR", "CityTax", "Cloudbeds", "Contabilidade", "EnergiaEDP", "Gaz", "NOSInternet", "Spotify"],
-                "Obra": ["\"NomeoftheProject\"", "MaodeObra\"NomeoftheProject\"", "Materiel\"NomeoftheProject\"", "Tools\"NomeoftheProject\""],
-                "Obra-\"2025\"": ["Agua\"2025\"", "Eletricidade\"2025\"", "Furnitures2025\"", "Incêncio\"2025\"", "Mao-de-obra\"2025\"", "Material\"2025\"", "Tools\"2025\""],
-                "Obra-\"2026\"": ["Building/Construction/Company\"2026\"", "Cafe/food\"2026\"", "Furnitures2026\"", "Incêncio\"2026\"", "Mao-de-obra\"2026\"", "Material\"2026\"", "Material/Tools\"2026\"", "Project/Admin\"2026\"", "Tools\"2026\"", "Uber/ Transporte\"2026\""],
-                "Obra-\"Beds\"": ["Bunkbeds"],
-                "Obra-\"FavelaRecycling\"": ["furnitures\"FavelaRecycling\"", "Material\"FavelaRecycling\""],
-                "Obra-\"NomedoProject\"": ["Furnitures\"NomedoProject\"", "MaodeObra\"NomedoProject\"", "material\"NomedoProject\""],
-                "Obra-\"Project Cafe\"": ["Furnitures\"Project Cafe\"", "MaodeObra\"Project Cafe\"", "material\"Project Cafe\""],
-                "Obra-\"RoofTop\"": ["Furniture\"RoofTop\"", "MaodeObra\"RoofTop\"", "Tools\"RoofTop\""],
+                "Obra": ["NomeoftheProject", "MaodeObra NomeoftheProject", "Materiel NomeoftheProject", "Tools NomeoftheProject"],
+                "Obra-2025": ["Agua 2025", "Eletricidade 2025", "Furnitures 2025", "Incêncio 2025", "Mao-de-obra 2025", "Material 2025", "Tools 2025"],
+                "Obra-2026": ["Building/Construction/Company 2026", "Cafe/food 2026", "Furnitures 2026", "Incêncio 2026", "Mao-de-obra 2026", "Material 2026", "Material/Tools 2026", "Project/Admin 2026", "Tools 2026", "Uber/ Transporte 2026"],
+                "Obra-Beds": ["Bunkbeds"],
+                "Obra-FavelaRecycling": ["furnitures FavelaRecycling", "Material FavelaRecycling"],
+                "Obra-NomedoProject": ["Furnitures NomedoProject", "MaodeObra NomedoProject", "material NomedoProject"],
+                "Obra-Project Cafe": ["Furnitures Project Cafe", "MaodeObra Project Cafe", "material Project Cafe"],
+                "Obra-RoofTop": ["Furniture RoofTop", "MaodeObra RoofTop", "Tools RoofTop"],
                 "Obra-Cafe": ["Furnitures-Cafe", "MaodeObra-Cafe", "Material/Tools-Cafe"],
                 "Others": ["Dryer", "Key", "Other"],
                 "Papel Pack": ["Diversos Papel Pack", "Gloves", "Handsoap", "Iva-PapelPack", "KitchenRoll", "Sunset Floor Cleaner", "Toalha de mao", "Toiletpaper", "Trashbag 120l", "Trashbag Toilet"],
@@ -257,15 +266,32 @@
             const itemsContainer = document.getElementById('items-container');
             const btnAddItem = document.getElementById('btn-add-item');
 
-            function criarOpcoesCategorias() {
-                let options = '<option value="" disabled selected>Selecione a categoria...</option>';
+            function criarOpcoesCategorias(catSelecionada) {
+                let options = '<option value="" disabled ' + (catSelecionada ? '' : 'selected') + '>Selecione a categoria...</option>';
                 for (let cat in subcategoriasPorCategoria) {
-                    options += `<option value="${cat}">${cat}</option>`;
+                    const isSelected = (cat === catSelecionada) ? 'selected' : '';
+                    options += `<option value="${cat}" ${isSelected}>${cat}</option>`;
                 }
                 return options;
             }
 
-            function adicionarLinhaProduto() {
+            function preencherSubcategoriasSelect(selectSub, categoria, subSelecionada) {
+                selectSub.innerHTML = '<option value="" disabled ' + (subSelecionada ? '' : 'selected') + '>Selecione a subcategoria...</option>';
+                if (subcategoriasPorCategoria[categoria]) {
+                    subcategoriasPorCategoria[categoria].forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub;
+                        option.textContent = sub;
+                        if (sub === subSelecionada) {
+                            option.selected = true;
+                        }
+                        selectSub.appendChild(option);
+                    });
+                }
+            }
+
+            function adicionarLinhaProduto(dados) {
+                dados = dados || { categoria: '', subcategoria: '', quantidade: 1, valor_unitario: 0 };
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item-row';
 
@@ -275,7 +301,7 @@
                         <div>
                             <label><b>Category:</b></label>
                             <select name="categoria[]" class="select-categoria" required>
-                                ${criarOpcoesCategorias()}
+                                ${criarOpcoesCategorias(dados.categoria)}
                             </select>
                         </div>
                         <div>
@@ -289,11 +315,11 @@
                     <div class="grid-3" style="margin-top: 10px;">
                         <div>
                             <label><b>Quantity:</b></label>
-                            <input type="number" name="quantidade[]" class="input-qtd" value="1" min="1" step="1" required>
+                            <input type="number" name="quantidade[]" class="input-qtd" value="${dados.quantidade}" min="1" step="1" required>
                         </div>
                         <div>
                             <label><b>Unit Price ($):</b></label>
-                            <input type="number" name="valor_unitario[]" class="input-valor" step="0.01" placeholder="0.00" required>
+                            <input type="number" name="valor_unitario[]" class="input-valor" value="${dados.valor_unitario}" step="0.01" placeholder="0.00" required>
                         </div>
                         <div>
                             <label><b>Subtotal ($):</b></label>
@@ -303,8 +329,14 @@
                 `;
 
                 itemsContainer.appendChild(itemDiv);
+
+                const selectSub = itemDiv.querySelector('.select-subcategoria');
+                if (dados.categoria) {
+                    preencherSubcategoriasSelect(selectSub, dados.categoria, dados.subcategoria);
+                }
+
                 vincularEventosLinha(itemDiv);
-                calcularTotalGeral();
+                calcularSubtotalLinha(itemDiv);
             }
 
             function removerLinhaProduto(botao) {
@@ -324,16 +356,7 @@
                 const inputValor = row.querySelector('.input-valor');
 
                 selectCat.addEventListener('change', function () {
-                    const cat = this.value;
-                    selectSub.innerHTML = '<option value="" disabled selected>Selecione a subcategoria...</option>';
-                    if (subcategoriasPorCategoria[cat]) {
-                        subcategoriasPorCategoria[cat].forEach(sub => {
-                            const option = document.createElement('option');
-                            option.value = sub;
-                            option.textContent = sub;
-                            selectSub.appendChild(option);
-                        });
-                    }
+                    preencherSubcategoriasSelect(selectSub, this.value, '');
                 });
 
                 inputQtd.addEventListener('input', () => calcularSubtotalLinha(row));
@@ -361,11 +384,16 @@
                 document.getElementById('input-total-geral').value = totalGeral.toFixed(2);
             }
 
-            btnAddItem.addEventListener('click', adicionarLinhaProduto);
+            btnAddItem.addEventListener('click', () => adicionarLinhaProduto());
 
-            // Inicializa a página com o primeiro item
-            adicionarLinhaProduto();
+            // Carrega os itens salvos no banco ou adiciona 1 linha vazia caso não haja itens
+            if (Array.isArray(itensSalvos) && itensSalvos.length > 0) {
+                itensSalvos.forEach(item => adicionarLinhaProduto(item));
+            } else {
+                adicionarLinhaProduto();
+            }
         </script>
+    </div>
 </body>
 
 </html>
