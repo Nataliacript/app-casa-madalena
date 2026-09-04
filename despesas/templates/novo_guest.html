@@ -113,9 +113,16 @@
             {% csrf_token %}
             <div><label>Name:</label> <input type="text" name="name" required></div>
 
-            <div><label>Bed Number (1 a 24):</label>
-                <input type="number" name="bed_number" min="1" max="25" required>
-            </div>
+<div>
+    <label>Bed Number (1 to 24 or Hammock):</label>
+    <input 
+        type="text" 
+        name="bed_number" 
+        pattern="^(?:[1-9]|1[0-9]|2[0-4]|Hammock)$" 
+        title="Enter a number from 1 to 24 or the word Hammock"
+        required
+    >
+</div>
 
             <div><label>Payment Date (dd/mm/aaaa):</label>
                 <input type="text" name="payment_date" placeholder="01/08/2026"

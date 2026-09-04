@@ -114,7 +114,7 @@ class ItemMoneyBoxExpense(models.Model):
 
 class FamilyFriend(models.Model):
     name = models.CharField(max_length=200)
-    bed_number = models.IntegerField()
+    bed_number = models.CharField(max_length=20, null=True, blank=True)
     payment_date = models.DateField()
     check_in = models.DateField()
     check_out = models.DateField()
