@@ -323,7 +323,16 @@ def resultado_page(request):
     if request.method == 'POST' and 'arquivo_excel' in request.FILES:
         arquivo = request.FILES['arquivo_excel']
         abas_escolhidas = request.POST.get('abas_liberadas', '')
-        ArquivoResultado.objects.create(nome=arquivo.name, arquivo=arquivo, abas_liberadas=abas_escolhidas)
+        arquivo.seek(0)
+        conteudo_bytes = arquivo.read()
+        novo_arquivo = ArquivoResultado(
+            nome=arquivo.name,
+            arquivo=arquivo,
+            abas_liberadas=abas_escolhidas,
+            conteudo_binario=conteudo_bytes
+        )
+        novo_arquivo.save()
+
         return redirect('resultado_page')
 
     arquivo_id = request.GET.get('arquivo_id')
@@ -331,121 +340,128 @@ def resultado_page(request):
         try:
             arquivo_obj = ArquivoResultado.objects.get(id=arquivo_id)
             arquivo_selecionado = arquivo_obj
-            
-            # MÁGICA: Usamos o OpenPyXL para ler o arquivo
-            wb = openpyxl.load_workbook(arquivo_obj.arquivo.path, data_only=True)
-            
-            if arquivo_obj.abas_liberadas:
-                abas_disponiveis = [aba.strip() for aba in arquivo_obj.abas_liberadas.split(',') if aba.strip()]
+
+            file_stream = arquivo_obj.get_file_stream()
+
+            if not file_stream:
+                # Se for um registro antigo sem conteúdo binario
+                tabela_html = "<p style='color:red;'>Este arquivo antigo foi apagado pelo servidor. Por favor, reenvie a planilha.</p>"
             else:
-                abas_disponiveis = wb.sheetnames
-
-            aba_requisitada = request.GET.get('aba')
+   
+                wb = openpyxl.load_workbook(file_stream, data_only=True)
             
-            if aba_requisitada in abas_disponiveis:
-                aba_selecionada = aba_requisitada
-            else:
-                aba_selecionada = abas_disponiveis[0]
+                if arquivo_obj.abas_liberadas:
+                    abas_disponiveis = [aba.strip() for aba in arquivo_obj.abas_liberadas.split(',') if aba.strip()]
+                else:
+                    abas_disponiveis = wb.sheetnames
 
-            # Pega a aba escolhida
-            ws = wb[aba_selecionada]
+                aba_requisitada = request.GET.get('aba')
             
-            # Função auxiliar para descobrir a cor real (o Excel é confuso com cores)
-            def pegar_cor(cor_obj):
-                if not cor_obj or cor_obj.type == 'indexed': return None
-                if cor_obj.rgb == '00000000': return None
-                rgb = str(cor_obj.rgb)
-                if len(rgb) == 8 and rgb.startswith('00'): return f"#{rgb[2:]}"
-                return f"#{rgb}"
+                if aba_requisitada in abas_disponiveis:
+                    aba_selecionada = aba_requisitada
+                elif abas_disponiveis:
+                    aba_selecionada = abas_disponiveis[0]
 
-                    # NOVO: A lista NEGRA. O que estiver aqui, NÃO vira dinheiro. O resto, vira!
-            # Adicione mais palavras aqui se precisar ignorar mais colunas
-            palavras_que_NAOviram_dinheiro = [
-                'quantidade', 'qtd', 'mês', 'mes', 'month', 'dia', 'day', 
-                'id', 'código', 'codigo', 'code', 'número', 'numero', 'year', 'ano',
-                'unidade', 'item', 'status', 'pago', 'categoria', 'subcategoria','Nights'
-            ]
-            
-            # Pega os cabeçalhos da primeira linha para saber o nome das colunas
-            cabecalhos = []
-            for cell in ws[1]:
-                cabecalhos.append(str(cell.value).lower() if cell.value else "")
+                if aba_selecionada and aba_selecionada in wb.sheetnames:
+                    ws = wb[aba_selecionada]
 
-            # Começa a construir a tabela HTML com estilos
-            html_builder = ['<table style="border-collapse: collapse; font-family: Calibri, sans-serif;">']
-            
-            for linha_idx, row in enumerate(ws.iter_rows()):
-                html_builder.append('<tr>')
+                    
+                # Função auxiliar para descobrir a cor real (o Excel é confuso com cores)
+                def pegar_cor(cor_obj):
+                    if not cor_obj or cor_obj.type == 'indexed': return None
+                    if cor_obj.rgb == '00000000': return None
+                    rgb = str(cor_obj.rgb)
+                    if len(rgb) == 8 and rgb.startswith('00'): return f"#{rgb[2:]}"
+                    return f"#{rgb}"
+
+                        # NOVO: A lista NEGRA. O que estiver aqui, NÃO vira dinheiro. O resto, vira!
+                # Adicione mais palavras aqui se precisar ignorar mais colunas
+                palavras_que_NAOviram_dinheiro = [
+                    'quantidade', 'qtd', 'mês', 'mes', 'month', 'dia', 'day', 
+                    'id', 'código', 'codigo', 'code', 'número', 'numero', 'year', 'ano',
+                    'unidade', 'item', 'status', 'pago', 'categoria', 'subcategoria','Nights'
+                ]
                 
-                for coluna_idx, cell in enumerate(row):
-                    estilos_css = "border: 1px solid #d4d4d4; padding: 5px 10px;"
-                    valor = cell.value if cell.value is not None else ""
+                # Pega os cabeçalhos da primeira linha para saber o nome das colunas
+                cabecalhos = []
+                for cell in ws[1]:
+                    cabecalhos.append(str(cell.value).lower() if cell.value else "")
 
-                    # NOVO: Se o Excel identificou como Data, formata para Mês/Ano
-                    if isinstance(valor, (datetime, date)):
-                        valor = valor.strftime('%m/%Y')
+                # Começa a construir a tabela HTML com estilos
+                html_builder = ['<table style="border-collapse: collapse; font-family: Calibri, sans-serif;">']
+                
+                for linha_idx, row in enumerate(ws.iter_rows()):
+                    html_builder.append('<tr>')
                     
-                    # Verifica se é exatamente uma string vazia (""). 
-                    if valor == "":
-                        estilos_css = "border: none; padding: 0;"
-                    
-                    # 1. Fundo (Background)
-                    if cell.fill and cell.fill.fgColor:
-                        cor_fundo = pegar_cor(cell.fill.fgColor)
-                        if cor_fundo:
-                            estilos_css += f"background-color: {cor_fundo};"
-                    
-                    # 2. Fonte (Cor, Tamanho, Negrito)
-                    if cell.font:
-                        if cell.font.color:
-                            cor_letra = pegar_cor(cell.font.color)
-                            if cor_letra:
-                                estilos_css += f"color: {cor_letra};"
-                        if cell.font.size:
-                            try:
-                                tamanho = cell.font.size.pt
-                            except AttributeError:
-                                tamanho = float(cell.font.size)
-                            tamanho_px = int(tamanho * 1.33)
-                            estilos_css += f"font-size: {tamanho_px}px;"
-                        if cell.font.bold:
-                            estilos_css += "font-weight: bold;"
+                    for coluna_idx, cell in enumerate(row):
+                        estilos_css = "border: 1px solid #d4d4d4; padding: 5px 10px;"
+                        valor = cell.value if cell.value is not None else ""
 
-                    # 3. A LÓGICA INTELIGENTE (Dinheiro, Porcentagem, Vizinho ou Normal)
-                    if isinstance(valor, (int, float)):
-                        nome_da_coluna = cabecalhos[coluna_idx] if coluna_idx < len(cabecalhos) else ""
-                        nao_e_dinheiro = False
+                        # NOVO: Se o Excel identificou como Data, formata para Mês/Ano
+                        if isinstance(valor, (datetime, date)):
+                            valor = valor.strftime('%m/%Y')
                         
-                        # REGRA A: É PORCENTAGEM nativa do Excel?
-                        if cell.number_format and '%' in str(cell.number_format):
-                            valor = f"{valor * 100:.2f}%"
-                            nao_e_dinheiro = True
+                        # Verifica se é exatamente uma string vazia (""). 
+                        if valor == "":
+                            estilos_css = "border: none; padding: 0;"
                         
-                        # NOVA REGRA B: A célula AO LADO esquerda diz "Beds"?
-                        elif coluna_idx > 0:
-                            celula_esquerda = row[coluna_idx - 1]
-                            if celula_esquerda.value:
-                                # Converte TUDO para texto minúsculo e tira espaços nas pontas
-                                texto_vizinho = str(celula_esquerda.value).lower().strip()
-                                
-                                if 'beds' in texto_vizinho:
-                                    valor = f"{valor:.0f}"
-                                    nao_e_dinheiro = True
-                                    
-                        # REGRA C: Está na lista negra pelo cabeçalho da coluna?
-                        elif any(palavra in nome_da_coluna for palavra in palavras_que_NAOviram_dinheiro):
-                            valor = f"{valor:.2f}"
-                            nao_e_dinheiro = True
+                        # 1. Fundo (Background)
+                        if cell.fill and cell.fill.fgColor:
+                            cor_fundo = pegar_cor(cell.fill.fgColor)
+                            if cor_fundo:
+                                estilos_css += f"background-color: {cor_fundo};"
+                        
+                        # 2. Fonte (Cor, Tamanho, Negrito)
+                        if cell.font:
+                            if cell.font.color:
+                                cor_letra = pegar_cor(cell.font.color)
+                                if cor_letra:
+                                    estilos_css += f"color: {cor_letra};"
+                            if cell.font.size:
+                                try:
+                                    tamanho = cell.font.size.pt
+                                except AttributeError:
+                                    tamanho = float(cell.font.size)
+                                tamanho_px = int(tamanho * 1.33)
+                                estilos_css += f"font-size: {tamanho_px}px;"
+                            if cell.font.bold:
+                                estilos_css += "font-weight: bold;"
+
+                        # 3. A LÓGICA INTELIGENTE (Dinheiro, Porcentagem, Vizinho ou Normal)
+                        if isinstance(valor, (int, float)):
+                            nome_da_coluna = cabecalhos[coluna_idx] if coluna_idx < len(cabecalhos) else ""
+                            nao_e_dinheiro = False
                             
-                        # REGRA D: Se não caiu em nenhuma regra acima, vira Dinheiro!
-                        if not nao_e_dinheiro:
-                            valor = f"${valor:,.2f}"        
-                    
-                    html_builder.append(f'<td style="{estilos_css}">{valor}</td>')
-                html_builder.append('</tr>')
-            
-            html_builder.append('</table>')
-            tabela_html = "".join(html_builder)    
+                            # REGRA A: É PORCENTAGEM nativa do Excel?
+                            if cell.number_format and '%' in str(cell.number_format):
+                                valor = f"{valor * 100:.2f}%"
+                                nao_e_dinheiro = True
+                            
+                            # NOVA REGRA B: A célula AO LADO esquerda diz "Beds"?
+                            elif coluna_idx > 0:
+                                celula_esquerda = row[coluna_idx - 1]
+                                if celula_esquerda.value:
+                                    # Converte TUDO para texto minúsculo e tira espaços nas pontas
+                                    texto_vizinho = str(celula_esquerda.value).lower().strip()
+                                    
+                                    if 'beds' in texto_vizinho:
+                                        valor = f"{valor:.0f}"
+                                        nao_e_dinheiro = True
+                                        
+                            # REGRA C: Está na lista negra pelo cabeçalho da coluna?
+                            elif any(palavra in nome_da_coluna for palavra in palavras_que_NAOviram_dinheiro):
+                                valor = f"{valor:.2f}"
+                                nao_e_dinheiro = True
+                                
+                            # REGRA D: Se não caiu em nenhuma regra acima, vira Dinheiro!
+                            if not nao_e_dinheiro:
+                                valor = f"${valor:,.2f}"        
+                        
+                        html_builder.append(f'<td style="{estilos_css}">{valor}</td>')
+                    html_builder.append('</tr>')
+                
+                html_builder.append('</table>')
+                tabela_html = "".join(html_builder)    
             
         except Exception as e:
             tabela_html = f"<p style='color:red;'>Erro ao processar o estilo da planilha: {e}</p>"

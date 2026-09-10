@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import io
+
 
 
 class Despesa(models.Model):
@@ -36,16 +38,26 @@ class ItemDespesa(models.Model):
 # MODELO PARA GUARDAR OS ARQUIVOS EXCEL
 
 class ArquivoResultado(models.Model):
-    nome = models.CharField(max_length=200) 
-    arquivo = models.FileField(upload_to='resultados/') 
+    nome = models.CharField(max_length=255) 
+    arquivo = models.FileField(upload_to='resultados/', blank=True, null=True)
     data_upload = models.DateTimeField(auto_now_add=True) 
     
     # Guarda nomes das abas separados por vírgula ("Resumo, Dados Gerais")
     abas_liberadas = models.TextField(blank=True, null=True, help_text="Nomes das abas separados por vírgula")
 
+    conteudo_binario = models.BinaryField(blank=True, null=True)
+
     def __str__(self):
         return self.nome
 
+    def get_file_stream(self):
+        """Retorna o conteúdo binário como um fluxo de memória (BytesIO)
+
+        compatível com o OpenPyXL
+        """
+        if self.conteudo_binario:
+            return io.BytesIO(self.conteudo_binario)
+        return None
 
 class Extra(models.Model):
     data = models.DateField()
