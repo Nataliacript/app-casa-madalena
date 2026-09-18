@@ -47,6 +47,16 @@
             max-width: 400px;
         }
 
+        /* Estilo dos inputs de busca por coluna */
+        .column-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 4px 6px;
+            font-size: 11px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
         /* Estilo dos botões */
         .btn {
             text-decoration: none;
@@ -124,6 +134,18 @@
                     <th>Value</th>
                     <th>Reference</th>
                     <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+                <!-- Linha de filtros por coluna -->
+                <tr id="filter-row">
+                    <th><input type="text" placeholder="Filter Date" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Origin" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Category" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Subcat" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Number" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Value" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Ref" class="column-search"></th>
+                    <th><input type="text" placeholder="Filter Description" class="column-search"></th>
                     <th></th>
                 </tr>
             </thead>
@@ -187,10 +209,16 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Desabilita a ordenação ao clicar nos campos de busca
+            $('#filter-row input').on('click', function (e) {
+                e.stopPropagation();
+            });
+
             var table = $('#minhaTabela').DataTable({
                 language: { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json' },
                 order: [[0, 'desc']],
                 pageLength: 100,
+                orderCellsTop: true, // Garante que a ordenação ocorra apenas na 1ª linha do thead
                 columns: [
                     { data: 0 },
                     { data: 1 },
@@ -228,6 +256,19 @@
                     $(api.column(5).footer()).html(totalFormatado);
                 }
             });
+
+            // Aplica a pesquisa individual por coluna
+            table.columns().every(function (index) {
+                var that = this;
+                
+                // Conecta os inputs da linha #filter-row à busca de cada coluna
+                $('#filter-row input').eq(index).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+            });
+        });
+
         });
     </script>
 
