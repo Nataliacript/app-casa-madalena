@@ -24,11 +24,14 @@ Render2024*
 Para acompanhar atualizacoes
 https://dashboard.render.com/web/srv-d9q9o8u417fc73frdkvg/logs?t=app&r=live
 
+ssh
+ssh2024*
 
 
 Github
-nataliacript@gmail.com
+nataliacript@gmail.com (acho que é sem ponto)
 GitHub2024*
+
 
 Render
 nataliacript@gmail.com
